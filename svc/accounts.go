@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// GetClient - Used to get client
+// GetClient - Get client
 func GetClient(addr string) (*ethclient.Client, error) {
 	client, err := ethclient.Dial(addr)
 	if err != nil {
@@ -17,7 +17,7 @@ func GetClient(addr string) (*ethclient.Client, error) {
 	return client, err
 }
 
-// GetBalance - Used to get Balance
+// GetBalance - Get Balance
 func GetBalance(ctx context.Context, client *ethclient.Client, addr string) (*big.Int, error) {
 	account := common.HexToAddress(addr)
 	balance, err := client.BalanceAt(ctx, account, nil)
@@ -27,7 +27,7 @@ func GetBalance(ctx context.Context, client *ethclient.Client, addr string) (*bi
 	return balance, nil
 }
 
-// GetBalance2 - Used to get Balance
+// GetBalance2 - Get Balance
 func GetBalance2(ctx context.Context, clientAddr string, addr string) (*big.Int, error) {
 	client, err := GetClient(clientAddr)
 	account := common.HexToAddress(addr)
@@ -38,7 +38,7 @@ func GetBalance2(ctx context.Context, clientAddr string, addr string) (*big.Int,
 	return balance, nil
 }
 
-// GetPendingBalanceAt - Used to get Pending Balance
+// GetPendingBalanceAt - Get Pending Balance
 func GetPendingBalanceAt(ctx context.Context, client *ethclient.Client, addr string) (*big.Int, error) {
 	account := common.HexToAddress(addr)
 	balance, err := client.PendingBalanceAt(ctx, account)
@@ -48,7 +48,7 @@ func GetPendingBalanceAt(ctx context.Context, client *ethclient.Client, addr str
 	return balance, nil
 }
 
-// GetPendingBalanceAt2 - Used to get Pending Balance
+// GetPendingBalanceAt2 - Get Pending Balance
 func GetPendingBalanceAt2(ctx context.Context, clientAddr string, addr string) (*big.Int, error) {
 	client, err := GetClient(clientAddr)
 	account := common.HexToAddress(addr)

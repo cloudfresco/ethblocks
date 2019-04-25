@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// PrintBlock - used to print block
+// PrintBlock - Print block
 func PrintBlock(block *types.Block) {
 	log.Println("Number:", block.Number().Uint64())
 	log.Println(" Hash            : ", block.Hash().Hex())
@@ -32,7 +32,7 @@ func PrintBlock(block *types.Block) {
 	log.Println(" Uncles          : ", block.Uncles())
 }
 
-// GetBlockByNumber - used to get block by block number
+// GetBlockByNumber - Get block by block number
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbynumber
 func GetBlockByNumber(ctx context.Context, client *ethclient.Client, blockNumber *big.Int) (*types.Block, error) {
 	block, err := client.BlockByNumber(ctx, blockNumber)
@@ -42,7 +42,7 @@ func GetBlockByNumber(ctx context.Context, client *ethclient.Client, blockNumber
 	return block, nil
 }
 
-// GetBlockByHash - get block by block hash
+// GetBlockByHash - Get block by block hash
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbyhash
 func GetBlockByHash(ctx context.Context, client *ethclient.Client, hash common.Hash) (*types.Block, error) {
 	block, err := client.BlockByHash(ctx, hash)
@@ -52,7 +52,7 @@ func GetBlockByHash(ctx context.Context, client *ethclient.Client, hash common.H
 	return block, nil
 }
 
-// BlockNumber - get the latest block number
+// BlockNumber - Get the latest block number
 func BlockNumber(ctx context.Context, client *ethclient.Client) (string, error) {
 	header, err := client.HeaderByNumber(ctx, nil)
 	if err != nil {
