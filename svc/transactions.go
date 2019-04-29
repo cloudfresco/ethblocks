@@ -2,6 +2,7 @@ package svc
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"log"
 	"math/big"
 
@@ -12,22 +13,33 @@ import (
 
 // PrintTransaction - Print Transaction
 func PrintTransaction(tx *types.Transaction) {
-	log.Println("tx:", tx)
 	log.Println("hash          : ", tx.Hash())
 	log.Println("nonce           : ", tx.Nonce())
-	log.Println("Size     : ", tx.Size())
+	log.Println("from            : ", getSender(tx))
+	log.Println("to              : ", tx.To().Hex())
 	log.Println("value           : ", tx.Value())
 	log.Println("gasPrice        : ", tx.GasPrice())
 	log.Println("gas             : ", tx.Gas())
-	log.Println("from            : ", GetSender(tx))
-	log.Println("to              : ", tx.To())
+	log.Println("input             : ", tx.Data())
+	log.Println("Size     : ", tx.Size())
+
 }
 
-// GetSender - Get sender details
-func GetSender(tx *types.Transaction) string {
+func PrintReceipt(receipt *types.Receipt) {
+  log.Println("Status", receipt.Status)
+  log.Println("CumulativeGasUsed",receipt.CumulativeGasUsed)
+  log.Println("Bloom",receipt.Bloom)
+  log.Println("Logs",receipt.Logs)
+  log.Println("TxHash",receipt.TxHash.Hex())
+  log.Println("ContractAddress",receipt.ContractAddress)
+  log.Println("GasUsed",receipt.GasUsed)
+}
+
+// getSender - Get sender details
+func getSender(tx *types.Transaction) string {
 	msg, err := tx.AsMessage(types.NewEIP155Signer(tx.ChainId()))
 	if err != nil {
-		log.Fatal(err)
+		return ""
 	}
 
 	return msg.From().Hex()
@@ -79,6 +91,27 @@ func GetTransactionByBlockNumberAndIndex() {
 
 }
 
+// GetTransactionsByAddress - Get Transactions By Address
+func GetTransactionsByAddress(ctx context.Context, client *ethclient.Client, frmaddr string, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Transaction, error) {
+	frmaddress := common.HexToHash(frmaddr)
+	txs := []*types.Transaction{}
+	var one = big.NewInt(1)
+	for i := new(big.Int).Set(startBlockNumber); i.Cmp(endBlockNumber) <= 0; i.Add(i, one) {
+		block, err := GetBlockByNumber(ctx, client, i)
+		if err != nil {
+			return nil, err
+		}
+		for _, tx := range block.Transactions() {
+			frmaddress1 := common.HexToHash(getSender(tx))
+			if frmaddress == frmaddress1 {
+				txs = append(txs, tx)
+			}
+		}
+
+	}
+	return txs, nil
+}
+
 // GetTransactionReceipt - Get Transaction Receipt
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionreceipt
 func GetTransactionReceipt(ctx context.Context, client *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
@@ -97,31 +130,19 @@ func CreateRawTransaction(nonce uint64, toAddress common.Address, amount *big.In
 
 // SendRawTransaction - Send Raw Transaction
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sendrawtransaction
-func SendRawTransaction(ctx context.Context, client *ethclient.Client, tx *types.Transaction) error {
-	err := client.SendTransaction(ctx, tx)
+func SendRawTransaction(ctx context.Context, client *ethclient.Client, tx *types.Transaction, prv *ecdsa.PrivateKey) error {
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		return err
+	}
+
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), prv)
+	if err != nil {
+		return err
+	}
+	err = client.SendTransaction(ctx, signedTx)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-// GetTransactionsByAddress - Get Transactions By Address
-func GetTransactionsByAddress(ctx context.Context, client *ethclient.Client, frmaddr string, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Transaction, error) {
-	frmaddress := common.HexToHash(frmaddr)
-	txs := []*types.Transaction{}
-	var one = big.NewInt(1)
-	for i := new(big.Int).Set(startBlockNumber); i.Cmp(endBlockNumber) <= 0; i.Add(i, one) {
-		block, err := GetBlockByNumber(ctx, client, i)
-		if err != nil {
-			return nil, err
-		}
-		for _, tx := range block.Transactions() {
-			frmaddress1 := common.HexToHash(GetSender(tx))
-			if frmaddress == frmaddress1 {
-				txs = append(txs, tx)
-			}
-		}
-
-	}
-	return txs, nil
 }

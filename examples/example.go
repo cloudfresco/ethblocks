@@ -83,23 +83,11 @@ func ExAccount() {
 	}
 	log.Println("GetBalance :", balance)
 
-	balance2, err := svc.GetBalance2(ctx, clientaddr, account)
+	pendingbalance, err := svc.GetPendingBalanceAt(ctx, client, account)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("GetBalance2 :", balance2)
-
-	balance3, err := svc.GetPendingBalanceAt(ctx, client, account)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("GetPendingBalanceAt:", balance3)
-
-	balance4, err := svc.GetPendingBalanceAt2(ctx, clientaddr, account)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("GetPendingBalanceAt2:", balance4)
+	log.Println("GetPendingBalanceAt:", pendingbalance)
 
 }
 
@@ -111,16 +99,33 @@ func ExTransaction() {
 	}
 	ctx := context.Background()
 
+	count, err := svc.GetBlockTransactionCountByNumber(ctx, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("GetBlockTransactionCountByNumber :", count)
+
 	blockNumber := big.NewInt(7602500)
-	log.Println("GetBlockByNumber")
 	block, err := svc.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	count, err = svc.GetBlockTransactionCountByHash(ctx, client, block.Hash())
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("GetBlockTransactionCountByHash:", count)
+
 	txs := block.Transactions()
-	blockhash := txs[0].Hash()
+	blockhash := txs[1].Hash()
 	tx, _, err := svc.GetTransactionByHash(ctx, client, blockhash)
+	if err != nil {
+		log.Fatal(err)
+	}
+	svc.PrintTransaction(tx)
+
+	tx, err = svc.GetTransactionByBlockHashAndIndex(ctx, client, block.Hash(), uint(0))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -134,4 +139,6 @@ func ExTransaction() {
 		svc.PrintTransaction(tx)
 	}
 
+  receipt, err := svc.GetTransactionReceipt(ctx, client, tx.Hash())
+  svc.PrintReceipt(receipt)
 }
