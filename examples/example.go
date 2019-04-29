@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/cloudfresco/ethblocks/svc"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -16,6 +17,7 @@ func main() {
 
 // ExBlock - Block Examples
 func ExBlock() {
+
 	client, err := svc.GetClient("https://mainnet.infura.io")
 	if err != nil {
 		log.Fatal(err)
@@ -29,6 +31,8 @@ func ExBlock() {
 		log.Fatal(err)
 	}
 	svc.PrintBlock(block)
+	blk, err := svc.AddBlock(block)
+	log.Println(blk)
 
 	log.Println("GetBlockByHash")
 	h := block.Hash()
@@ -139,6 +143,6 @@ func ExTransaction() {
 		svc.PrintTransaction(tx)
 	}
 
-  receipt, err := svc.GetTransactionReceipt(ctx, client, tx.Hash())
-  svc.PrintReceipt(receipt)
+	receipt, err := svc.GetTransactionReceipt(ctx, client, tx.Hash())
+	svc.PrintReceipt(receipt)
 }

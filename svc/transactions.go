@@ -25,14 +25,15 @@ func PrintTransaction(tx *types.Transaction) {
 
 }
 
+// PrintReceipt - Print Receipt
 func PrintReceipt(receipt *types.Receipt) {
-  log.Println("Status", receipt.Status)
-  log.Println("CumulativeGasUsed",receipt.CumulativeGasUsed)
-  log.Println("Bloom",receipt.Bloom)
-  log.Println("Logs",receipt.Logs)
-  log.Println("TxHash",receipt.TxHash.Hex())
-  log.Println("ContractAddress",receipt.ContractAddress)
-  log.Println("GasUsed",receipt.GasUsed)
+	log.Println("Status", receipt.Status)
+	log.Println("CumulativeGasUsed", receipt.CumulativeGasUsed)
+	log.Println("Bloom", receipt.Bloom)
+	log.Println("Logs", receipt.Logs)
+	log.Println("TxHash", receipt.TxHash.Hex())
+	log.Println("ContractAddress", receipt.ContractAddress)
+	log.Println("GasUsed", receipt.GasUsed)
 }
 
 // getSender - Get sender details
