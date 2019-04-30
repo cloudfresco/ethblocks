@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"math/big"
+	"reflect"
 
 	"github.com/cloudfresco/ethblocks/svc"
 	_ "github.com/go-sql-driver/mysql"
@@ -31,8 +32,15 @@ func ExBlock() {
 		log.Fatal(err)
 	}
 	svc.PrintBlock(block)
-	blk, err := svc.AddBlock(block)
-	log.Println(blk)
+	blk1, err := svc.AddBlock(block)
+	if err != nil {
+		log.Fatal(err)
+	}
+	blk2, err := svc.GetBlock(blk1.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(reflect.DeepEqual(blk1, blk2))
 
 	log.Println("GetBlockByHash")
 	h := block.Hash()

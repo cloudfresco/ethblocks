@@ -4,26 +4,27 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
 // Block - Used for
 type Block struct {
 	ID          uint
-	BlockNumber uint
-	BlockTime   uint
+	BlockNumber uint64
+	BlockTime   uint64
 	ParentHash  string
 	UncleHash   string
 	BlockRoot   string
 	TxHash      string
 	ReceiptHash string
 	MixDigest   string
-	BlockNonce  uint
+	BlockNonce  uint64
 	Coinbase    string
-	GasLimit    uint
-	GasUsed     uint
-	Difficulty  uint
-	BlockSize   uint
+	GasLimit    uint64
+	GasUsed     uint64
+	Difficulty  uint64
+	BlockSize   common.StorageSize
 }
 
 // AddBlock - add a block to the db
@@ -36,22 +37,23 @@ func AddBlock(block *types.Block) (*Block, error) {
 	}
 	log.Println(appState)
 	bl := Block{}
-	bl.BlockNumber = uint(block.Number().Uint64())
-	bl.BlockTime = uint(block.Time())
+	bl.BlockNumber = block.Number().Uint64()
+	bl.BlockTime = block.Time()
 	bl.ParentHash = block.ParentHash().Hex()
 	bl.UncleHash = block.UncleHash().Hex()
 	bl.BlockRoot = block.Root().Hex()
 	bl.TxHash = block.TxHash().Hex()
 	bl.ReceiptHash = block.ReceiptHash().Hex()
 	bl.MixDigest = block.MixDigest().Hex()
-	bl.BlockNonce = uint(block.Nonce())
+	bl.BlockNonce = block.Nonce() //uint64(0)
 	bl.Coinbase = block.Coinbase().Hex()
-	bl.GasLimit = uint(block.GasLimit())
-	bl.GasUsed = uint(block.GasUsed())
-	bl.Difficulty = uint(block.Difficulty().Uint64())
-	bl.BlockSize = uint(block.Size())
+	bl.GasLimit = block.GasLimit()
+	bl.GasUsed = block.GasUsed()
+	bl.Difficulty = block.Difficulty().Uint64()
+	bl.BlockSize = block.Size()
 	log.Println(bl)
 	db := appState.Db
+	log.Println(db)
 	tx, err := db.Begin()
 	if err != nil {
 		log.Println(err)
@@ -113,15 +115,14 @@ func InsertBlock(tx *sql.Tx, blk Block) (*Block, error) {
 		blk.Difficulty,
 		blk.BlockSize)
 	if err != nil {
-		err = stmt.Close()
 		log.Println(err)
+		err = stmt.Close()
 		return nil, err
 	}
-
 	uID, err := res.LastInsertId()
 	if err != nil {
-		err = stmt.Close()
 		log.Println(err)
+		err = stmt.Close()
 		return nil, err
 	}
 	blk.ID = uint(uID)
