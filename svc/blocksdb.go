@@ -35,7 +35,6 @@ func AddBlock(block *types.Block) (*Block, error) {
 		log.Println(err)
 		return nil, err
 	}
-	log.Println(appState)
 	bl := Block{}
 	bl.BlockNumber = block.Number().Uint64()
 	bl.BlockTime = block.Time()
@@ -45,15 +44,13 @@ func AddBlock(block *types.Block) (*Block, error) {
 	bl.TxHash = block.TxHash().Hex()
 	bl.ReceiptHash = block.ReceiptHash().Hex()
 	bl.MixDigest = block.MixDigest().Hex()
-	bl.BlockNonce = block.Nonce() //uint64(0)
+	bl.BlockNonce = block.Nonce()
 	bl.Coinbase = block.Coinbase().Hex()
 	bl.GasLimit = block.GasLimit()
 	bl.GasUsed = block.GasUsed()
 	bl.Difficulty = block.Difficulty().Uint64()
 	bl.BlockSize = block.Size()
-	log.Println(bl)
 	db := appState.Db
-	log.Println(db)
 	tx, err := db.Begin()
 	if err != nil {
 		log.Println(err)
@@ -65,6 +62,14 @@ func AddBlock(block *types.Block) (*Block, error) {
 		log.Println(err)
 		err = tx.Rollback()
 		return nil, err
+	}
+	for _, blockuncle := range block.Uncles() {
+		_, err := AddBlockUncle(tx, blockuncle, blk.ID)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return nil, err
+		}
 	}
 	err = tx.Commit()
 	if err != nil {

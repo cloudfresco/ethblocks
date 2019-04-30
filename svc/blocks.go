@@ -18,8 +18,8 @@ func PrintBlock(block *types.Block) {
 	log.Println(" Nonce           : ", block.Nonce())
 	log.Println(" Sha3Uncles      : ", block.UncleHash().Hex())
 	log.Println(" LogsBloom       : ", block.Bloom())
-	log.Println(" StateRoot       : ", block.Root())
-	log.Println(" TransactionsRoot: ", block.TxHash())
+	log.Println(" StateRoot       : ", block.Root().Hex())
+	log.Println(" TransactionsRoot: ", block.TxHash().Hex())
 	log.Println(" Miner           : ", block.Coinbase().Hex())
 	log.Println(" Difficulty      : ", block.Difficulty().Uint64())
 	log.Println(" ExtraData       : ", block.Extra())
@@ -30,6 +30,23 @@ func PrintBlock(block *types.Block) {
 	log.Println(" Transactions    : ", block.Transactions())
 	log.Println(" Length of transactions    : ", len(block.Transactions()))
 	log.Println(" Uncles          : ", block.Uncles())
+}
+
+// PrintBlockUncle - Print block Uncle
+func PrintBlockUncle(uncle *types.Header) {
+	log.Println("Number:", uncle.Number.Uint64())
+	log.Println(" ParentHash      : ", uncle.ParentHash.Hex())
+	log.Println(" Nonce           : ", uncle.Nonce.Uint64())
+	log.Println(" Sha3Uncles      : ", uncle.UncleHash.Hex())
+	log.Println(" LogsBloom       : ", uncle.Bloom)
+	log.Println(" StateRoot       : ", uncle.Root.Hex())
+	log.Println(" TransactionsRoot: ", uncle.TxHash.Hex())
+	log.Println(" Miner           : ", uncle.Coinbase.Hex())
+	log.Println(" Difficulty      : ", uncle.Difficulty.Uint64())
+	log.Println(" Size           : ", uncle.Size())
+	log.Println(" GasLimit        : ", uncle.GasLimit)
+	log.Println(" GasUsed         : ", uncle.GasUsed)
+	log.Println(" Timestamp       : ", uncle.Time)
 }
 
 // GetBlockByNumber - Get block by block number
@@ -73,6 +90,13 @@ func GetBlocks(ctx context.Context, client *ethclient.Client, startBlockNumber *
 		blocks = append(blocks, block)
 	}
 	return blocks, nil
+}
+
+// GetUncles - Get Uncles by block
+// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbyhash
+func GetUncles(block *types.Block) []*types.Header {
+	blockuncles := block.Uncles()
+	return blockuncles
 }
 
 // GetUncleCountByBlockNumber - Get Uncle Count By Block Number
