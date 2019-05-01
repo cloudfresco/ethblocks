@@ -13,15 +13,15 @@ import (
 
 // PrintTransaction - Print Transaction
 func PrintTransaction(tx *types.Transaction) {
-	log.Println("hash          : ", tx.Hash())
-	log.Println("nonce           : ", tx.Nonce())
+	log.Println("hash            : ", tx.Hash().Hex())
+	log.Println("hash            : ", tx.Hash().Hex())
+	log.Println("AccountNonce    : ", tx.Nonce())
+	log.Println("Price           : ", tx.GasPrice().Uint64())
+	log.Println("GasLimit        : ", tx.Gas())
+	log.Println("TxAmount        : ", tx.Value())
 	log.Println("from            : ", getSender(tx))
 	log.Println("to              : ", tx.To().Hex())
-	log.Println("value           : ", tx.Value())
-	log.Println("gasPrice        : ", tx.GasPrice())
-	log.Println("gas             : ", tx.Gas())
-	log.Println("input             : ", tx.Data())
-	log.Println("Size     : ", tx.Size())
+	log.Println("Size            : ", tx.Size())
 
 }
 
@@ -44,6 +44,13 @@ func getSender(tx *types.Transaction) string {
 	}
 
 	return msg.From().Hex()
+}
+
+// GetTransactions - Get Transaction by block
+// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbyhash
+func GetTransactions(block *types.Block) []*types.Transaction {
+	transactions := block.Transactions()
+	return transactions
 }
 
 // GetBlockTransactionCountByNumber - Get Block Transaction Count By Number

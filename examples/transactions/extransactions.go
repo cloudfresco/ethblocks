@@ -33,6 +33,11 @@ func ExTransaction() {
 		log.Fatal(err)
 	}
 
+	blocktransactions := svc.GetTransactions(block)
+	for _, blocktransaction := range blocktransactions {
+		svc.PrintTransaction(blocktransaction)
+	}
+
 	count, err = svc.GetBlockTransactionCountByHash(ctx, client, block.Hash())
 	if err != nil {
 		log.Fatal(err)
