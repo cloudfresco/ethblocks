@@ -23,17 +23,6 @@ func PrintTransaction(tx *types.Transaction) {
 	log.Println("Size            : ", tx.Size())
 }
 
-// PrintReceipt - Print Receipt
-func PrintReceipt(receipt *types.Receipt) {
-	log.Println("Status", receipt.Status)
-	log.Println("CumulativeGasUsed", receipt.CumulativeGasUsed)
-	log.Println("Bloom", receipt.Bloom)
-	log.Println("Logs", receipt.Logs)
-	log.Println("TxHash", receipt.TxHash.Hex())
-	log.Println("ContractAddress", receipt.ContractAddress)
-	log.Println("GasUsed", receipt.GasUsed)
-}
-
 // getSender - Get sender details
 func getSender(tx *types.Transaction) string {
 	msg, err := tx.AsMessage(types.NewEIP155Signer(tx.ChainId()))
@@ -116,16 +105,6 @@ func GetTransactionsByAddress(ctx context.Context, client *ethclient.Client, frm
 
 	}
 	return txs, nil
-}
-
-// GetTransactionReceipt - Get Transaction Receipt
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionreceipt
-func GetTransactionReceipt(ctx context.Context, client *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
-	receipt, err := client.TransactionReceipt(ctx, txHash)
-	if err != nil {
-		return nil, err
-	}
-	return receipt, nil
 }
 
 // CreateRawTransaction - Create Raw Transaction

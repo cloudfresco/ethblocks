@@ -66,6 +66,11 @@ func ExTransaction() {
 		svc.PrintTransaction(tx)
 	}
 
-	receipt, err := svc.GetTransactionReceipt(ctx, client, tx.Hash())
-	svc.PrintReceipt(receipt)
+	for _, blocktransaction := range blocktransactions {
+		receipt, err := svc.GetTransactionReceipt(ctx, client, blocktransaction.Hash())
+		if err != nil {
+			log.Fatal(err)
+		}
+		svc.PrintReceipt(receipt)
+	}
 }
