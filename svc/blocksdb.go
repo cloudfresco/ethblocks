@@ -71,6 +71,14 @@ func AddBlock(block *types.Block) (*Block, error) {
 			return nil, err
 		}
 	}
+	for _, tns := range block.Transactions() {
+		_, err := AddTransaction(tx, tns, blk.ID, bl.BlockNumber)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return nil, err
+		}
+	}
 	err = tx.Commit()
 	if err != nil {
 		log.Println(err)

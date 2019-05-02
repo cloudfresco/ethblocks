@@ -29,7 +29,6 @@ func ExDb() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	blk1, err := svc.AddBlock(block)
 	if err != nil {
 		log.Fatal(err)

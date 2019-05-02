@@ -14,15 +14,13 @@ import (
 // PrintTransaction - Print Transaction
 func PrintTransaction(tx *types.Transaction) {
 	log.Println("hash            : ", tx.Hash().Hex())
-	log.Println("hash            : ", tx.Hash().Hex())
 	log.Println("AccountNonce    : ", tx.Nonce())
 	log.Println("Price           : ", tx.GasPrice().Uint64())
 	log.Println("GasLimit        : ", tx.Gas())
-	log.Println("TxAmount        : ", tx.Value())
+	log.Println("TxAmount        : ", tx.Value().Uint64())
 	log.Println("from            : ", getSender(tx))
 	log.Println("to              : ", tx.To().Hex())
 	log.Println("Size            : ", tx.Size())
-
 }
 
 // PrintReceipt - Print Receipt
