@@ -117,15 +117,14 @@ func InsertBlockUncle(tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
 }
 
 // GetBlockUncles - used for
-func GetBlockUncles(BlockID uint) (*[]BlockUncle, error) {
+func GetBlockUncles(BlockID uint) ([]*BlockUncle, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 	db := appState.Db
-	blk := BlockUncle{}
-	blockuncles := []BlockUncle{}
+	blockuncles := []*BlockUncle{}
 	rows, err := db.Query(`select 
     id,
 		block_number,
@@ -150,6 +149,7 @@ func GetBlockUncles(BlockID uint) (*[]BlockUncle, error) {
 	}
 
 	for rows.Next() {
+		blk := BlockUncle{}
 		err = rows.Scan(
 			&blk.ID,
 			&blk.BlockNumber,
@@ -168,12 +168,12 @@ func GetBlockUncles(BlockID uint) (*[]BlockUncle, error) {
 			&blk.BlockSize,
 			&blk.BlockID)
 
-		blockuncles = append(blockuncles, blk)
+		blockuncles = append(blockuncles, &blk)
 	}
 	err = rows.Close()
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	return &blockuncles, nil
+	return blockuncles, nil
 }

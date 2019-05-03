@@ -27,6 +27,7 @@ type Block struct {
 	GasUsed      uint64
 	Difficulty   uint64
 	BlockSize    common.StorageSize
+	BlockUncles  []*BlockUncle
 	Transactions []*Transaction
 }
 
@@ -66,13 +67,15 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		err = tx.Rollback()
 		return nil, err
 	}
+	uncles := []*BlockUncle{}
 	for _, blockuncle := range block.Uncles() {
-		_, err := AddBlockUncle(tx, blockuncle, blk.ID)
+		uncle, err := AddBlockUncle(tx, blockuncle, blk.ID)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
+		uncles = append(uncles, uncle)
 	}
 	transactions := []*Transaction{}
 	for _, tns := range block.Transactions() {
@@ -97,6 +100,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			return nil, err
 		}
 	}
+	blk.BlockUncles = uncles
 	blk.Transactions = transactions
 	err = tx.Commit()
 	if err != nil {
@@ -213,11 +217,17 @@ func GetBlock(ID uint) (*Block, error) {
 		log.Println(err)
 		return nil, err
 	}
+	uncles, err := GetBlockUncles(ID)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	transactions, err := GetBlockTransactions(ID)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+	blk.BlockUncles = uncles
 	blk.Transactions = transactions
 	return &blk, nil
 }

@@ -39,6 +39,12 @@ func ExDb() {
 	}
 	log.Println(reflect.DeepEqual(blk1, blk2))
 
+	uncles, err := svc.GetBlockUncles(blk1.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(reflect.DeepEqual(blk1.BlockUncles, uncles))
+
 	transactions, err := svc.GetBlockTransactions(blk1.ID)
 	if err != nil {
 		log.Fatal(err)
