@@ -1,34 +1,37 @@
 package svc
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // Block - Used for
 type Block struct {
-	ID          uint
-	BlockNumber uint64
-	BlockTime   uint64
-	ParentHash  string
-	UncleHash   string
-	BlockRoot   string
-	TxHash      string
-	ReceiptHash string
-	MixDigest   string
-	BlockNonce  uint64
-	Coinbase    string
-	GasLimit    uint64
-	GasUsed     uint64
-	Difficulty  uint64
-	BlockSize   common.StorageSize
+	ID           uint
+	BlockNumber  uint64
+	BlockTime    uint64
+	ParentHash   string
+	UncleHash    string
+	BlockRoot    string
+	TxHash       string
+	ReceiptHash  string
+	MixDigest    string
+	BlockNonce   uint64
+	Coinbase     string
+	GasLimit     uint64
+	GasUsed      uint64
+	Difficulty   uint64
+	BlockSize    common.StorageSize
+	Transactions []*Transaction
 }
 
 // AddBlock - add a block to the db
-func AddBlock(block *types.Block) (*Block, error) {
+func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error) {
 
 	appState, err := dbInit()
 	if err != nil {
@@ -71,14 +74,30 @@ func AddBlock(block *types.Block) (*Block, error) {
 			return nil, err
 		}
 	}
+	transactions := []*Transaction{}
 	for _, tns := range block.Transactions() {
-		_, err := AddTransaction(tx, tns, blk.ID, bl.BlockNumber)
+		transaction, err := AddTransaction(tx, tns, blk.ID, bl.BlockNumber)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return nil, err
+		}
+		transactions = append(transactions, transaction)
+		receipt, err := GetTransactionReceipt(ctx, client, tns.Hash())
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return nil, err
+		}
+
+		_, err = AddTransactionReceipt(tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
 	}
+	blk.Transactions = transactions
 	err = tx.Commit()
 	if err != nil {
 		log.Println(err)
@@ -194,6 +213,11 @@ func GetBlock(ID uint) (*Block, error) {
 		log.Println(err)
 		return nil, err
 	}
-
+	transactions, err := GetBlockTransactions(ID)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	blk.Transactions = transactions
 	return &blk, nil
 }

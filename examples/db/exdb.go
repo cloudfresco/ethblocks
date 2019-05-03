@@ -29,7 +29,7 @@ func ExDb() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	blk1, err := svc.AddBlock(block)
+	blk1, err := svc.AddBlock(ctx, client, block)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,4 +38,10 @@ func ExDb() {
 		log.Fatal(err)
 	}
 	log.Println(reflect.DeepEqual(blk1, blk2))
+
+	transactions, err := svc.GetBlockTransactions(blk1.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(reflect.DeepEqual(blk1.Transactions, transactions))
 }

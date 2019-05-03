@@ -101,17 +101,16 @@ func InsertTransaction(tx *sql.Tx, trans Transaction) (*Transaction, error) {
 }
 
 // GetBlockTransactions - used for
-func GetBlockTransactions(BlockID uint) (*[]Transaction, error) {
+func GetBlockTransactions(BlockID uint) ([]*Transaction, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 	db := appState.Db
-	trans := Transaction{}
-	transactions := []Transaction{}
+	transactions := []*Transaction{}
 	rows, err := db.Query(`select
-    id,
+      id,
 			block_number,
 			block_hash,
 			account_nonce,
@@ -130,6 +129,7 @@ func GetBlockTransactions(BlockID uint) (*[]Transaction, error) {
 	}
 
 	for rows.Next() {
+		trans := Transaction{}
 		err = rows.Scan(
 			&trans.ID,
 			&trans.BlockNumber,
@@ -143,13 +143,12 @@ func GetBlockTransactions(BlockID uint) (*[]Transaction, error) {
 			&trans.TxR,
 			&trans.TxS,
 			&trans.BlockID)
-
-		transactions = append(transactions, trans)
+		transactions = append(transactions, &trans)
 	}
 	err = rows.Close()
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	return &transactions, nil
+	return transactions, nil
 }
