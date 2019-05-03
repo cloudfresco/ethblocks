@@ -175,5 +175,10 @@ func GetBlockUncles(BlockID uint) ([]*BlockUncle, error) {
 		log.Println(err)
 		return nil, err
 	}
+	err = db.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	return blockuncles, nil
 }

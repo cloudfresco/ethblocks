@@ -85,20 +85,23 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			err = tx.Rollback()
 			return nil, err
 		}
-		transactions = append(transactions, transaction)
+
 		receipt, err := GetTransactionReceipt(ctx, client, tns.Hash())
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-
-		_, err = AddTransactionReceipt(tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
+		receipts := []*TransactionReceipt{}
+		treceipt, err := AddTransactionReceipt(tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
+		receipts = append(receipts, treceipt)
+		transaction.TransactionReceipts = receipts
+		transactions = append(transactions, transaction)
 	}
 	blk.BlockUncles = uncles
 	blk.Transactions = transactions
@@ -229,5 +232,10 @@ func GetBlock(ID uint) (*Block, error) {
 	}
 	blk.BlockUncles = uncles
 	blk.Transactions = transactions
+	err = db.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	return &blk, nil
 }

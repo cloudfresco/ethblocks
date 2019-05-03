@@ -9,18 +9,19 @@ import (
 
 // Transaction - Used for
 type Transaction struct {
-	ID           uint
-	BlockNumber  uint64
-	BlockHash    string
-	AccountNonce uint64
-	Price        uint64
-	GasLimit     uint64
-	TxAmount     uint64
-	Payload      []byte
-	TxV          uint64
-	TxR          uint64
-	TxS          uint64
-	BlockID      uint
+	ID                  uint
+	BlockNumber         uint64
+	BlockHash           string
+	AccountNonce        uint64
+	Price               uint64
+	GasLimit            uint64
+	TxAmount            uint64
+	Payload             []byte
+	TxV                 uint64
+	TxR                 uint64
+	TxS                 uint64
+	BlockID             uint
+	TransactionReceipts []*TransactionReceipt
 }
 
 // AddTransaction - add a transaction to the db
@@ -143,9 +144,24 @@ func GetBlockTransactions(BlockID uint) ([]*Transaction, error) {
 			&trans.TxR,
 			&trans.TxS,
 			&trans.BlockID)
+
+		receipts, err := GetTransactionReceipts(trans.ID)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		trans.TransactionReceipts = receipts
+
 		transactions = append(transactions, &trans)
+
 	}
 	err = rows.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = db.Close()
 	if err != nil {
 		log.Println(err)
 		return nil, err

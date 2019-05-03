@@ -142,5 +142,10 @@ func GetTransactionReceipts(TransactionID uint) ([]*TransactionReceipt, error) {
 		log.Println(err)
 		return nil, err
 	}
+	err = db.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	return receipts, nil
 }

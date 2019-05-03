@@ -50,4 +50,12 @@ func ExDb() {
 		log.Fatal(err)
 	}
 	log.Println(reflect.DeepEqual(blk1.Transactions, transactions))
+
+	for _, trans := range blk1.Transactions {
+		receipts, err := svc.GetTransactionReceipts(trans.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(reflect.DeepEqual(receipts, trans.TransactionReceipts))
+	}
 }
