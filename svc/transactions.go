@@ -34,7 +34,6 @@ func getSender(tx *types.Transaction) string {
 }
 
 // GetTransactions - Get Transaction by block
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbyhash
 func GetTransactions(block *types.Block) []*types.Transaction {
 	transactions := block.Transactions()
 	return transactions
