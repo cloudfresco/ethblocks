@@ -20,6 +20,7 @@ type TransactionReceipt struct {
 	PostState         []byte
 	BlockID           uint
 	TransactionID     uint
+	Logs              []*TransactionLog
 }
 
 // AddTransactionReceipt - add a transaction to the db

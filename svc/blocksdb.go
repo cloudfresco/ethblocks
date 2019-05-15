@@ -99,6 +99,14 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			err = tx.Rollback()
 			return nil, err
 		}
+		for _, lg := range GetLogs(receipt) {
+			_, err := AddTransactionLog(tx, lg, blk.ID, transaction.ID, treceipt.ID)
+			if err != nil {
+				log.Println(err)
+				err = tx.Rollback()
+				return nil, err
+			}
+		}
 		receipts = append(receipts, treceipt)
 		transaction.TransactionReceipts = receipts
 		transactions = append(transactions, transaction)
