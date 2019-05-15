@@ -72,5 +72,8 @@ func ExTransaction() {
 			log.Fatal(err)
 		}
 		svc.PrintReceipt(receipt)
+		for _, lg := range receipt.Logs {
+			svc.PrintReceiptLog(lg)
+		}
 	}
 }
