@@ -74,6 +74,9 @@ func ExTransaction() {
 		svc.PrintReceipt(receipt)
 		for _, lg := range receipt.Logs {
 			svc.PrintReceiptLog(lg)
+			for _, topic := range lg.Topics {
+				svc.PrintTopic(topic)
+			}
 		}
 	}
 }
