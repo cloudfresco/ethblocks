@@ -78,7 +78,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		uncles = append(uncles, uncle)
 	}
 	transactions := []*Transaction{}
-	for _, tns := range block.Transactions() {
+	for _, tns := range GetTransactions(block) {
 		transaction, err := AddTransaction(tx, tns, blk.ID, bl.BlockNumber)
 		if err != nil {
 			log.Println(err)
