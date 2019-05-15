@@ -68,7 +68,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		return nil, err
 	}
 	uncles := []*BlockUncle{}
-	for _, blockuncle := range block.Uncles() {
+	for _, blockuncle := range GetUncles(block) {
 		uncle, err := AddBlockUncle(tx, blockuncle, blk.ID)
 		if err != nil {
 			log.Println(err)
