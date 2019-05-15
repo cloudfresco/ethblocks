@@ -136,6 +136,12 @@ func GetTransactionReceipts(TransactionID uint) ([]*TransactionReceipt, error) {
 			&receipt.PostState,
 			&receipt.BlockID,
 			&receipt.TransactionID)
+		tlogs, err := GetTransactionLogs(receipt.ID)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		receipt.Logs = tlogs
 		receipts = append(receipts, &receipt)
 	}
 	err = rows.Close()
