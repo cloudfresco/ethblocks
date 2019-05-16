@@ -142,6 +142,12 @@ func GetTransactionLogs(TransactionReceiptID uint) ([]*TransactionLog, error) {
 			&lg.BlockID,
 			&lg.TransactionID,
 			&lg.TransactionReceiptID)
+		topics, err := GetTransactionLogTopics(lg.ID)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		lg.Topics = topics
 		tlogs = append(tlogs, &lg)
 	}
 	err = rows.Close()

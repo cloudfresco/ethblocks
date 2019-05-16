@@ -107,14 +107,17 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 				err = tx.Rollback()
 				return nil, err
 			}
+			topics := []*TransactionLogTopic{}
 			for _, tpc := range GetTopics(lg) {
-				_, err := AddTransactionLogTopic(tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+				topic, err := AddTransactionLogTopic(tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
 				if err != nil {
 					log.Println(err)
 					err = tx.Rollback()
 					return nil, err
 				}
+				topics = append(topics, topic)
 			}
+			tlg.Topics = topics
 			tlogs = append(tlogs, tlg)
 		}
 		treceipt.Logs = tlogs
