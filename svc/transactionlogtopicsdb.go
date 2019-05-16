@@ -72,3 +72,49 @@ func InsertTransactionLogTopic(tx *sql.Tx, lt TransactionLogTopic) (*Transaction
 	}
 	return &lt, nil
 }
+
+// GetTransactionLogTopics - used for getting topics by TransactionLogID
+func GetTransactionLogTopics(TransactionLogID uint) ([]*TransactionLogTopic, error) {
+	appState, err := dbInit()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	db := appState.Db
+	topics := []*TransactionLogTopic{}
+	rows, err := db.Query(`select
+      id,
+      topic,
+			block_id,
+			transaction_id,
+			transaction_receipt_id,
+      transaction_log_id from transaction_log_topics where transaction_log_id = ?`, TransactionLogID)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	for rows.Next() {
+		lt := TransactionLogTopic{}
+		err = rows.Scan(
+			&lt.ID,
+			&lt.Topic,
+			&lt.BlockID,
+			&lt.TransactionID,
+			&lt.TransactionReceiptID,
+			&lt.TransactionLogID)
+		topics = append(topics, &lt)
+	}
+	err = rows.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	err = db.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return topics, nil
+}
