@@ -21,6 +21,7 @@ type TransactionLog struct {
 	BlockID              uint
 	TransactionID        uint
 	TransactionReceiptID uint
+	Topics               []*TransactionLogTopic
 }
 
 // AddTransactionLog - add a transaction log to the db
