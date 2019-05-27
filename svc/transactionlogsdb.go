@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -25,7 +26,7 @@ type TransactionLog struct {
 }
 
 // AddTransactionLog - add a transaction log to the db
-func AddTransactionLog(tx *sql.Tx, lg *types.Log, BlockID uint, TransactionID uint, TransactionReceiptID uint) (*TransactionLog, error) {
+func AddTransactionLog(ctx context.Context, tx *sql.Tx, lg *types.Log, BlockID uint, TransactionID uint, TransactionReceiptID uint) (*TransactionLog, error) {
 	bl := TransactionLog{}
 	bl.BlockNumber = lg.BlockNumber
 	bl.BlockHash = lg.BlockHash.Hex()
@@ -38,7 +39,7 @@ func AddTransactionLog(tx *sql.Tx, lg *types.Log, BlockID uint, TransactionID ui
 	bl.BlockID = BlockID
 	bl.TransactionID = TransactionID
 	bl.TransactionReceiptID = TransactionReceiptID
-	transactionLog, err := InsertTransactionLog(tx, bl)
+	transactionLog, err := InsertTransactionLog(ctx, tx, bl)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -47,8 +48,8 @@ func AddTransactionLog(tx *sql.Tx, lg *types.Log, BlockID uint, TransactionID ui
 }
 
 // InsertTransactionLog - insert transaction Log details to db
-func InsertTransactionLog(tx *sql.Tx, lg TransactionLog) (*TransactionLog, error) {
-	stmt, err := tx.Prepare(`insert into transaction_logs
+func InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg TransactionLog) (*TransactionLog, error) {
+	stmt, err := tx.PrepareContext(ctx, `insert into transaction_logs
 	  ( 
 			block_number,
 			block_hash,
@@ -67,7 +68,7 @@ func InsertTransactionLog(tx *sql.Tx, lg TransactionLog) (*TransactionLog, error
 		log.Println(err)
 		return nil, err
 	}
-	res, err := stmt.Exec(
+	res, err := stmt.ExecContext(ctx,
 		lg.BlockNumber,
 		lg.BlockHash,
 		lg.Address,
@@ -100,7 +101,7 @@ func InsertTransactionLog(tx *sql.Tx, lg TransactionLog) (*TransactionLog, error
 }
 
 // GetTransactionLogs - used for getting logs by TransactionReceiptID
-func GetTransactionLogs(TransactionReceiptID uint) ([]*TransactionLog, error) {
+func GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*TransactionLog, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
@@ -108,7 +109,7 @@ func GetTransactionLogs(TransactionReceiptID uint) ([]*TransactionLog, error) {
 	}
 	db := appState.Db
 	tlogs := []*TransactionLog{}
-	rows, err := db.Query(`select
+	rows, err := db.QueryContext(ctx, `select
       id,
 			block_number,
 			block_hash,
@@ -142,7 +143,7 @@ func GetTransactionLogs(TransactionReceiptID uint) ([]*TransactionLog, error) {
 			&lg.BlockID,
 			&lg.TransactionID,
 			&lg.TransactionReceiptID)
-		topics, err := GetTransactionLogTopics(lg.ID)
+		topics, err := GetTransactionLogTopics(ctx, lg.ID)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -155,6 +156,13 @@ func GetTransactionLogs(TransactionReceiptID uint) ([]*TransactionLog, error) {
 		log.Println(err)
 		return nil, err
 	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	err = db.Close()
 	if err != nil {
 		log.Println(err)

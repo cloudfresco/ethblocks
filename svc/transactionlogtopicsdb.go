@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -18,14 +19,14 @@ type TransactionLogTopic struct {
 }
 
 // AddTransactionLogTopic - add a transaction Topic to the db
-func AddTransactionLogTopic(tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error) {
+func AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error) {
 	bl := TransactionLogTopic{}
 	bl.Topic = s.Hex()
 	bl.BlockID = BlockID
 	bl.TransactionID = TransactionID
 	bl.TransactionReceiptID = TransactionReceiptID
 	bl.TransactionLogID = TransactionLogID
-	transactiontopic, err := InsertTransactionLogTopic(tx, bl)
+	transactiontopic, err := InsertTransactionLogTopic(ctx, tx, bl)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -34,8 +35,8 @@ func AddTransactionLogTopic(tx *sql.Tx, s common.Hash, BlockID uint, Transaction
 }
 
 // InsertTransactionLogTopic - insert transaction Topic details to db
-func InsertTransactionLogTopic(tx *sql.Tx, lt TransactionLogTopic) (*TransactionLogTopic, error) {
-	stmt, err := tx.Prepare(`insert into transaction_log_topics
+func InsertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt TransactionLogTopic) (*TransactionLogTopic, error) {
+	stmt, err := tx.PrepareContext(ctx, `insert into transaction_log_topics
 	  ( 
 			topic,
 			block_id,
@@ -47,7 +48,7 @@ func InsertTransactionLogTopic(tx *sql.Tx, lt TransactionLogTopic) (*Transaction
 		log.Println(err)
 		return nil, err
 	}
-	res, err := stmt.Exec(
+	res, err := stmt.ExecContext(ctx,
 		lt.Topic,
 		lt.BlockID,
 		lt.TransactionID,
@@ -74,7 +75,7 @@ func InsertTransactionLogTopic(tx *sql.Tx, lt TransactionLogTopic) (*Transaction
 }
 
 // GetTransactionLogTopics - used for getting topics by TransactionLogID
-func GetTransactionLogTopics(TransactionLogID uint) ([]*TransactionLogTopic, error) {
+func GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
@@ -82,7 +83,7 @@ func GetTransactionLogTopics(TransactionLogID uint) ([]*TransactionLogTopic, err
 	}
 	db := appState.Db
 	topics := []*TransactionLogTopic{}
-	rows, err := db.Query(`select
+	rows, err := db.QueryContext(ctx, `select
       id,
       topic,
 			block_id,
@@ -111,6 +112,13 @@ func GetTransactionLogTopics(TransactionLogID uint) ([]*TransactionLogTopic, err
 		log.Println(err)
 		return nil, err
 	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	err = db.Close()
 	if err != nil {
 		log.Println(err)

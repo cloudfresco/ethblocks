@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -29,7 +30,7 @@ type BlockUncle struct {
 }
 
 // AddBlockUncle - add a block uncle to the db
-func AddBlockUncle(tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error) {
+func AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error) {
 	bl := BlockUncle{}
 	bl.BlockNumber = blkuncle.Number.Uint64()
 	bl.BlockTime = blkuncle.Time
@@ -46,7 +47,7 @@ func AddBlockUncle(tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncl
 	bl.Difficulty = blkuncle.Difficulty.Uint64()
 	bl.BlockSize = blkuncle.Size()
 	bl.BlockID = BlockID
-	blockuncle, err := InsertBlockUncle(tx, bl)
+	blockuncle, err := InsertBlockUncle(ctx, tx, bl)
 	if err != nil {
 		log.Println(err)
 		err = tx.Rollback()
@@ -56,8 +57,8 @@ func AddBlockUncle(tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncl
 }
 
 // InsertBlockUncle - insert block uncle details to db
-func InsertBlockUncle(tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
-	stmt, err := tx.Prepare(`insert into block_uncles
+func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
+	stmt, err := tx.PrepareContext(ctx, `insert into block_uncles
 	  ( 
 			block_number,
 			block_time,
@@ -80,7 +81,7 @@ func InsertBlockUncle(tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
 		log.Println(err)
 		return nil, err
 	}
-	res, err := stmt.Exec(
+	res, err := stmt.ExecContext(ctx,
 		blk.BlockNumber,
 		blk.BlockTime,
 		blk.ParentHash,
@@ -117,7 +118,7 @@ func InsertBlockUncle(tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
 }
 
 // GetBlockUncles - used for
-func GetBlockUncles(BlockID uint) ([]*BlockUncle, error) {
+func GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
@@ -125,7 +126,7 @@ func GetBlockUncles(BlockID uint) ([]*BlockUncle, error) {
 	}
 	db := appState.Db
 	blockuncles := []*BlockUncle{}
-	rows, err := db.Query(`select 
+	rows, err := db.QueryContext(ctx, `select 
     id,
 		block_number,
 		block_time,
@@ -175,6 +176,13 @@ func GetBlockUncles(BlockID uint) ([]*BlockUncle, error) {
 		log.Println(err)
 		return nil, err
 	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	err = db.Close()
 	if err != nil {
 		log.Println(err)

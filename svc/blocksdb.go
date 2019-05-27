@@ -61,7 +61,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		err = tx.Rollback()
 		return nil, err
 	}
-	blk, err := InsertBlock(tx, bl)
+	blk, err := InsertBlock(ctx, tx, bl)
 	if err != nil {
 		log.Println(err)
 		err = tx.Rollback()
@@ -69,7 +69,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 	}
 	uncles := []*BlockUncle{}
 	for _, blockuncle := range GetUncles(block) {
-		uncle, err := AddBlockUncle(tx, blockuncle, blk.ID)
+		uncle, err := AddBlockUncle(ctx, tx, blockuncle, blk.ID)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -79,7 +79,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 	}
 	transactions := []*Transaction{}
 	for _, tns := range GetTransactions(block) {
-		transaction, err := AddTransaction(tx, tns, blk.ID, bl.BlockNumber)
+		transaction, err := AddTransaction(ctx, tx, tns, blk.ID, bl.BlockNumber)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -93,7 +93,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			return nil, err
 		}
 		receipts := []*TransactionReceipt{}
-		treceipt, err := AddTransactionReceipt(tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
+		treceipt, err := AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -101,7 +101,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		}
 		tlogs := []*TransactionLog{}
 		for _, lg := range GetLogs(receipt) {
-			tlg, err := AddTransactionLog(tx, lg, blk.ID, transaction.ID, treceipt.ID)
+			tlg, err := AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -109,7 +109,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			}
 			topics := []*TransactionLogTopic{}
 			for _, tpc := range GetTopics(lg) {
-				topic, err := AddTransactionLogTopic(tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+				topic, err := AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
 				if err != nil {
 					log.Println(err)
 					err = tx.Rollback()
@@ -137,8 +137,8 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 }
 
 // InsertBlock - insert block details to db
-func InsertBlock(tx *sql.Tx, blk Block) (*Block, error) {
-	stmt, err := tx.Prepare(`insert into blocks
+func InsertBlock(ctx context.Context, tx *sql.Tx, blk Block) (*Block, error) {
+	stmt, err := tx.PrepareContext(ctx, `insert into blocks
 	  ( 
 			block_number,
 			block_time,
@@ -160,7 +160,7 @@ func InsertBlock(tx *sql.Tx, blk Block) (*Block, error) {
 		log.Println(err)
 		return nil, err
 	}
-	res, err := stmt.Exec(
+	res, err := stmt.ExecContext(ctx,
 		blk.BlockNumber,
 		blk.BlockTime,
 		blk.ParentHash,
@@ -196,7 +196,7 @@ func InsertBlock(tx *sql.Tx, blk Block) (*Block, error) {
 }
 
 // GetBlock - used for
-func GetBlock(ID uint) (*Block, error) {
+func GetBlock(ctx context.Context, ID uint) (*Block, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
@@ -204,7 +204,7 @@ func GetBlock(ID uint) (*Block, error) {
 	}
 	db := appState.Db
 	blk := Block{}
-	row := db.QueryRow(`select
+	row := db.QueryRowContext(ctx, `select
       id,
 			block_number,
 			block_time,
@@ -242,12 +242,12 @@ func GetBlock(ID uint) (*Block, error) {
 		log.Println(err)
 		return nil, err
 	}
-	uncles, err := GetBlockUncles(ID)
+	uncles, err := GetBlockUncles(ctx, ID)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
-	transactions, err := GetBlockTransactions(ID)
+	transactions, err := GetBlockTransactions(ctx, ID)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -259,5 +259,6 @@ func GetBlock(ID uint) (*Block, error) {
 		log.Println(err)
 		return nil, err
 	}
+
 	return &blk, nil
 }

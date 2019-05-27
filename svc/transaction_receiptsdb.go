@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -24,7 +25,7 @@ type TransactionReceipt struct {
 }
 
 // AddTransactionReceipt - add a transaction to the db
-func AddTransactionReceipt(tx *sql.Tx, receipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error) {
+func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error) {
 	bl := TransactionReceipt{}
 	bl.BlockNumber = BlockNumber
 	bl.BlockHash = BlockHash
@@ -36,7 +37,7 @@ func AddTransactionReceipt(tx *sql.Tx, receipt *types.Receipt, BlockID uint, Blo
 	bl.PostState = receipt.PostState
 	bl.BlockID = BlockID
 	bl.TransactionID = TransactionID
-	transactionReceipt, err := InsertTransactionReceipt(tx, bl)
+	transactionReceipt, err := InsertTransactionReceipt(ctx, tx, bl)
 	if err != nil {
 		log.Println(err)
 		err = tx.Rollback()
@@ -46,8 +47,8 @@ func AddTransactionReceipt(tx *sql.Tx, receipt *types.Receipt, BlockID uint, Blo
 }
 
 // InsertTransactionReceipt - insert transaction receipt details to db
-func InsertTransactionReceipt(tx *sql.Tx, receipt TransactionReceipt) (*TransactionReceipt, error) {
-	stmt, err := tx.Prepare(`insert into transaction_receipts
+func InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt TransactionReceipt) (*TransactionReceipt, error) {
+	stmt, err := tx.PrepareContext(ctx, `insert into transaction_receipts
 	  ( 
 			block_number,
 			block_hash,
@@ -64,7 +65,7 @@ func InsertTransactionReceipt(tx *sql.Tx, receipt TransactionReceipt) (*Transact
 		log.Println(err)
 		return nil, err
 	}
-	res, err := stmt.Exec(
+	res, err := stmt.ExecContext(ctx,
 		receipt.BlockNumber,
 		receipt.BlockHash,
 		receipt.TxHash,
@@ -96,7 +97,7 @@ func InsertTransactionReceipt(tx *sql.Tx, receipt TransactionReceipt) (*Transact
 }
 
 // GetTransactionReceipts - used for getting receipts by TransactionID
-func GetTransactionReceipts(TransactionID uint) ([]*TransactionReceipt, error) {
+func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
@@ -104,7 +105,7 @@ func GetTransactionReceipts(TransactionID uint) ([]*TransactionReceipt, error) {
 	}
 	db := appState.Db
 	receipts := []*TransactionReceipt{}
-	rows, err := db.Query(`select
+	rows, err := db.QueryContext(ctx, `select
       id,
 			block_number,
 			block_hash,
@@ -136,7 +137,7 @@ func GetTransactionReceipts(TransactionID uint) ([]*TransactionReceipt, error) {
 			&receipt.PostState,
 			&receipt.BlockID,
 			&receipt.TransactionID)
-		tlogs, err := GetTransactionLogs(receipt.ID)
+		tlogs, err := GetTransactionLogs(ctx, receipt.ID)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -149,6 +150,13 @@ func GetTransactionReceipts(TransactionID uint) ([]*TransactionReceipt, error) {
 		log.Println(err)
 		return nil, err
 	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	err = db.Close()
 	if err != nil {
 		log.Println(err)

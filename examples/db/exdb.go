@@ -29,26 +29,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	blk2, err := svc.GetBlock(blk1.ID)
+	blk2, err := svc.GetBlock(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = compareBlock(blk1, blk2)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = compareBlockUncles(blk1)
+	err = compareBlock(ctx, blk1, blk2)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = compareBlockTransactions(blk1)
+	err = compareBlockUncles(ctx, blk1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = compareReceiptsLogTopics(blk1)
+	err = compareBlockTransactions(ctx, blk1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = compareReceiptsLogTopics(ctx, blk1)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func main() {
 }
 
 // compareBlock - Compare block
-func compareBlock(blk1 *svc.Block, blk2 *svc.Block) error {
+func compareBlock(ctx context.Context, blk1 *svc.Block, blk2 *svc.Block) error {
 	if reflect.DeepEqual(blk1, blk2) == false {
 		return errors.New("Block Doesnt Match")
 	}
@@ -64,8 +64,8 @@ func compareBlock(blk1 *svc.Block, blk2 *svc.Block) error {
 }
 
 // compareBlockUncles - Compare Block Uncles
-func compareBlockUncles(blk1 *svc.Block) error {
-	uncles, err := svc.GetBlockUncles(blk1.ID)
+func compareBlockUncles(ctx context.Context, blk1 *svc.Block) error {
+	uncles, err := svc.GetBlockUncles(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,8 +76,8 @@ func compareBlockUncles(blk1 *svc.Block) error {
 }
 
 // compareBlockTransactions - Compare Block Transactions
-func compareBlockTransactions(blk1 *svc.Block) error {
-	transactions, err := svc.GetBlockTransactions(blk1.ID)
+func compareBlockTransactions(ctx context.Context, blk1 *svc.Block) error {
+	transactions, err := svc.GetBlockTransactions(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -89,9 +89,9 @@ func compareBlockTransactions(blk1 *svc.Block) error {
 }
 
 // compareReceiptsLogTopics - Compare Receipts Log Topics
-func compareReceiptsLogTopics(blk1 *svc.Block) error {
+func compareReceiptsLogTopics(ctx context.Context, blk1 *svc.Block) error {
 	for _, trans := range blk1.Transactions {
-		receipts, err := svc.GetTransactionReceipts(trans.ID)
+		receipts, err := svc.GetTransactionReceipts(ctx, trans.ID)
 		if err != nil {
 			log.Fatal(err)
 			return err
@@ -100,7 +100,7 @@ func compareReceiptsLogTopics(blk1 *svc.Block) error {
 			return errors.New("Block Transaction Receipts Doesnt Match")
 		}
 		for _, receipt := range trans.TransactionReceipts {
-			logs, err := svc.GetTransactionLogs(receipt.ID)
+			logs, err := svc.GetTransactionLogs(ctx, receipt.ID)
 			if err != nil {
 				log.Fatal(err)
 				return err
@@ -110,7 +110,7 @@ func compareReceiptsLogTopics(blk1 *svc.Block) error {
 			}
 
 			for _, lg := range receipt.Logs {
-				topics, err := svc.GetTransactionLogTopics(lg.ID)
+				topics, err := svc.GetTransactionLogTopics(ctx, lg.ID)
 				if err != nil {
 					log.Fatal(err)
 					return err

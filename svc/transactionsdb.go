@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -25,7 +26,7 @@ type Transaction struct {
 }
 
 // AddTransaction - add a transaction to the db
-func AddTransaction(tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error) {
+func AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error) {
 	txv, txr, txs := tns.RawSignatureValues()
 	bl := Transaction{}
 	bl.BlockNumber = BlockNumber
@@ -39,7 +40,7 @@ func AddTransaction(tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumbe
 	bl.TxR = txr.Uint64()
 	bl.TxS = txs.Uint64()
 	bl.BlockID = BlockID
-	transaction, err := InsertTransaction(tx, bl)
+	transaction, err := InsertTransaction(ctx, tx, bl)
 	if err != nil {
 		log.Println(err)
 		err = tx.Rollback()
@@ -49,8 +50,8 @@ func AddTransaction(tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumbe
 }
 
 // InsertTransaction - insert transaction details to db
-func InsertTransaction(tx *sql.Tx, trans Transaction) (*Transaction, error) {
-	stmt, err := tx.Prepare(`insert into transactions
+func InsertTransaction(ctx context.Context, tx *sql.Tx, trans Transaction) (*Transaction, error) {
+	stmt, err := tx.PrepareContext(ctx, `insert into transactions
 	  ( 
 			block_number,
 			block_hash,
@@ -69,7 +70,7 @@ func InsertTransaction(tx *sql.Tx, trans Transaction) (*Transaction, error) {
 		log.Println(err)
 		return nil, err
 	}
-	res, err := stmt.Exec(
+	res, err := stmt.ExecContext(ctx,
 		trans.BlockNumber,
 		trans.BlockHash,
 		trans.AccountNonce,
@@ -102,7 +103,7 @@ func InsertTransaction(tx *sql.Tx, trans Transaction) (*Transaction, error) {
 }
 
 // GetBlockTransactions - used for
-func GetBlockTransactions(BlockID uint) ([]*Transaction, error) {
+func GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error) {
 	appState, err := dbInit()
 	if err != nil {
 		log.Println(err)
@@ -110,7 +111,7 @@ func GetBlockTransactions(BlockID uint) ([]*Transaction, error) {
 	}
 	db := appState.Db
 	transactions := []*Transaction{}
-	rows, err := db.Query(`select
+	rows, err := db.QueryContext(ctx, `select
       id,
 			block_number,
 			block_hash,
@@ -145,7 +146,7 @@ func GetBlockTransactions(BlockID uint) ([]*Transaction, error) {
 			&trans.TxS,
 			&trans.BlockID)
 
-		receipts, err := GetTransactionReceipts(trans.ID)
+		receipts, err := GetTransactionReceipts(ctx, trans.ID)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -156,6 +157,12 @@ func GetBlockTransactions(BlockID uint) ([]*Transaction, error) {
 
 	}
 	err = rows.Close()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = rows.Err()
 	if err != nil {
 		log.Println(err)
 		return nil, err
