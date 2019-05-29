@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -31,34 +32,45 @@ type BlockUncle struct {
 
 // AddBlockUncle - add a block uncle to the db
 func AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error) {
-	bl := BlockUncle{}
-	bl.BlockNumber = blkuncle.Number.Uint64()
-	bl.BlockTime = blkuncle.Time
-	bl.ParentHash = blkuncle.ParentHash.Hex()
-	bl.UncleHash = blkuncle.UncleHash.Hex()
-	bl.BlockRoot = blkuncle.Root.Hex()
-	bl.TxHash = blkuncle.TxHash.Hex()
-	bl.ReceiptHash = blkuncle.ReceiptHash.Hex()
-	bl.MixDigest = blkuncle.MixDigest.Hex()
-	bl.BlockNonce = blkuncle.Nonce.Uint64()
-	bl.Coinbase = blkuncle.Coinbase.Hex()
-	bl.GasLimit = blkuncle.GasLimit
-	bl.GasUsed = blkuncle.GasUsed
-	bl.Difficulty = blkuncle.Difficulty.Uint64()
-	bl.BlockSize = blkuncle.Size()
-	bl.BlockID = BlockID
-	blockuncle, err := InsertBlockUncle(ctx, tx, bl)
-	if err != nil {
-		log.Println(err)
-		err = tx.Rollback()
+	select {
+	case <-ctx.Done():
+		err := errors.New("Client closed connection")
 		return nil, err
+	default:
+		bl := BlockUncle{}
+		bl.BlockNumber = blkuncle.Number.Uint64()
+		bl.BlockTime = blkuncle.Time
+		bl.ParentHash = blkuncle.ParentHash.Hex()
+		bl.UncleHash = blkuncle.UncleHash.Hex()
+		bl.BlockRoot = blkuncle.Root.Hex()
+		bl.TxHash = blkuncle.TxHash.Hex()
+		bl.ReceiptHash = blkuncle.ReceiptHash.Hex()
+		bl.MixDigest = blkuncle.MixDigest.Hex()
+		bl.BlockNonce = blkuncle.Nonce.Uint64()
+		bl.Coinbase = blkuncle.Coinbase.Hex()
+		bl.GasLimit = blkuncle.GasLimit
+		bl.GasUsed = blkuncle.GasUsed
+		bl.Difficulty = blkuncle.Difficulty.Uint64()
+		bl.BlockSize = blkuncle.Size()
+		bl.BlockID = BlockID
+		blockuncle, err := InsertBlockUncle(ctx, tx, bl)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return nil, err
+		}
+		return blockuncle, nil
 	}
-	return blockuncle, nil
 }
 
 // InsertBlockUncle - insert block uncle details to db
 func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
-	stmt, err := tx.PrepareContext(ctx, `insert into block_uncles
+	select {
+	case <-ctx.Done():
+		err := errors.New("Client closed connection")
+		return nil, err
+	default:
+		stmt, err := tx.PrepareContext(ctx, `insert into block_uncles
 	  ( 
 			block_number,
 			block_time,
@@ -77,56 +89,62 @@ func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk BlockUncle) (*BlockUn
       block_id)
   values (?,?,?,?,?,?,?,?,?,?,
           ?,?,?,?,?);`)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	res, err := stmt.ExecContext(ctx,
-		blk.BlockNumber,
-		blk.BlockTime,
-		blk.ParentHash,
-		blk.UncleHash,
-		blk.BlockRoot,
-		blk.TxHash,
-		blk.ReceiptHash,
-		blk.MixDigest,
-		blk.BlockNonce,
-		blk.Coinbase,
-		blk.GasLimit,
-		blk.GasUsed,
-		blk.Difficulty,
-		blk.BlockSize,
-		blk.BlockID)
-	if err != nil {
-		log.Println(err)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		res, err := stmt.ExecContext(ctx,
+			blk.BlockNumber,
+			blk.BlockTime,
+			blk.ParentHash,
+			blk.UncleHash,
+			blk.BlockRoot,
+			blk.TxHash,
+			blk.ReceiptHash,
+			blk.MixDigest,
+			blk.BlockNonce,
+			blk.Coinbase,
+			blk.GasLimit,
+			blk.GasUsed,
+			blk.Difficulty,
+			blk.BlockSize,
+			blk.BlockID)
+		if err != nil {
+			log.Println(err)
+			err = stmt.Close()
+			return nil, err
+		}
+		uID, err := res.LastInsertId()
+		if err != nil {
+			log.Println(err)
+			err = stmt.Close()
+			return nil, err
+		}
+		blk.ID = uint(uID)
 		err = stmt.Close()
-		return nil, err
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		return &blk, nil
 	}
-	uID, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		err = stmt.Close()
-		return nil, err
-	}
-	blk.ID = uint(uID)
-	err = stmt.Close()
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return &blk, nil
 }
 
 // GetBlockUncles - used for
 func GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
-	appState, err := dbInit()
-	if err != nil {
-		log.Println(err)
+	select {
+	case <-ctx.Done():
+		err := errors.New("Client closed connection")
 		return nil, err
-	}
-	db := appState.Db
-	blockuncles := []*BlockUncle{}
-	rows, err := db.QueryContext(ctx, `select 
+	default:
+		appState, err := dbInit()
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		db := appState.Db
+		blockuncles := []*BlockUncle{}
+		rows, err := db.QueryContext(ctx, `select 
     id,
 		block_number,
 		block_time,
@@ -144,49 +162,50 @@ func GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
 		block_size, 
 		block_id from block_uncles where block_id = ?`, BlockID)
 
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
 
-	for rows.Next() {
-		blk := BlockUncle{}
-		err = rows.Scan(
-			&blk.ID,
-			&blk.BlockNumber,
-			&blk.BlockTime,
-			&blk.ParentHash,
-			&blk.UncleHash,
-			&blk.BlockRoot,
-			&blk.TxHash,
-			&blk.ReceiptHash,
-			&blk.MixDigest,
-			&blk.BlockNonce,
-			&blk.Coinbase,
-			&blk.GasLimit,
-			&blk.GasUsed,
-			&blk.Difficulty,
-			&blk.BlockSize,
-			&blk.BlockID)
+		for rows.Next() {
+			blk := BlockUncle{}
+			err = rows.Scan(
+				&blk.ID,
+				&blk.BlockNumber,
+				&blk.BlockTime,
+				&blk.ParentHash,
+				&blk.UncleHash,
+				&blk.BlockRoot,
+				&blk.TxHash,
+				&blk.ReceiptHash,
+				&blk.MixDigest,
+				&blk.BlockNonce,
+				&blk.Coinbase,
+				&blk.GasLimit,
+				&blk.GasUsed,
+				&blk.Difficulty,
+				&blk.BlockSize,
+				&blk.BlockID)
 
-		blockuncles = append(blockuncles, &blk)
-	}
-	err = rows.Close()
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
+			blockuncles = append(blockuncles, &blk)
+		}
+		err = rows.Close()
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
 
-	err = rows.Err()
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
+		err = rows.Err()
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
 
-	err = db.Close()
-	if err != nil {
-		log.Println(err)
-		return nil, err
+		err = db.Close()
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		return blockuncles, nil
 	}
-	return blockuncles, nil
 }
