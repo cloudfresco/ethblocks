@@ -25,20 +25,20 @@ type DbOptions struct {
 // dbInit - used for database initialization
 func dbInit() (*AppState, error) {
 
-	var dbObj DbOptions
+	var dbOpt DbOptions
 
 	v := viper.New()
 	v.AutomaticEnv()
 
-	dbObj.DB = v.GetString("ETHBLOCKS_DB")
-	dbObj.User = v.GetString("ETHBLOCKS_DBUSER")
-	dbObj.Password = v.GetString("ETHBLOCKS_DBPASS")
-	dbObj.Host = v.GetString("ETHBLOCKS_DBHOST")
-	dbObj.Port = v.GetString("ETHBLOCKS_DBPORT")
-	dbObj.Schema = v.GetString("ETHBLOCKS_DBNAME")
+	dbOpt.DB = v.GetString("ETHBLOCKS_DB")
+	dbOpt.User = v.GetString("ETHBLOCKS_DBUSER")
+	dbOpt.Password = v.GetString("ETHBLOCKS_DBPASS")
+	dbOpt.Host = v.GetString("ETHBLOCKS_DBHOST")
+	dbOpt.Port = v.GetString("ETHBLOCKS_DBPORT")
+	dbOpt.Schema = v.GetString("ETHBLOCKS_DBNAME")
 
-	db, err := sql.Open(dbObj.DB, fmt.Sprint(dbObj.User, ":", dbObj.Password, "@(", dbObj.Host,
-		":", dbObj.Port, ")/", dbObj.Schema, "?charset=utf8mb4&parseTime=True"))
+	db, err := sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
+		":", dbOpt.Port, ")/", dbOpt.Schema, "?charset=utf8mb4&parseTime=True"))
 	if err != nil {
 		log.Println(err)
 		return nil, err
