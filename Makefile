@@ -6,6 +6,8 @@ PKGS = ./...
 
 all: fmt vet lint err build
 
+chk: fmt vet lint err
+
 deps: 
 	@dep ensure
 
@@ -22,7 +24,7 @@ vet:
 	@go vet $(PKGS)
 
 linter:
-	@go get -u github.com/golang/lint/golint
+	@go get -u golang.org/x/lint/golint
 
 lint: linter
 	@for d in $$(go list ./... | grep -v /vendor/); do golint $${d}; done 
