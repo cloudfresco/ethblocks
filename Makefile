@@ -2,37 +2,40 @@
 SHELL := /bin/bash
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 PKGS = ./...
-.PHONY: all deps build test fmt vet lint err doc
+.PHONY: all build test fmt vet lint err doc
 
-all: fmt vet lint err build
+all: chk build
 
 chk: fmt vet lint err
 
-deps: 
-	@dep ensure
-
 build: 
+	@echo "Building ethblocks"	
 	@go build $(PKGS)
 
-test: deps build
+test:
+	@echo "Starting tests"	
 	@go test -v $(PKGS)
 
 fmt:
+	@echo "Running gofmt"	
 	@gofmt -s -l -w $(SRC)
 
 vet:
+	@echo "Running vet"	
 	@go vet $(PKGS)
 
 linter:
 	@go get -u golang.org/x/lint/golint
 
 lint: linter
+	@echo "Running lint"
 	@for d in $$(go list ./... | grep -v /vendor/); do golint $${d}; done 
 
 errcheck: 
 	@go get github.com/kisielk/errcheck
 
 err: errcheck 
+	@echo "Running errcheck"
 	@errcheck $(PKGS)
 
 doc: 
