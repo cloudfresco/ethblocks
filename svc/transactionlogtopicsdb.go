@@ -123,6 +123,10 @@ func GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*Tra
 				&lt.TransactionID,
 				&lt.TransactionReceiptID,
 				&lt.TransactionLogID)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
 			topics = append(topics, &lt)
 		}
 		err = rows.Close()

@@ -163,7 +163,10 @@ func GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, er
 				&trans.TxR,
 				&trans.TxS,
 				&trans.BlockID)
-
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
 			receipts, err := GetTransactionReceipts(ctx, trans.ID)
 			if err != nil {
 				log.Println(err)

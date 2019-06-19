@@ -161,6 +161,10 @@ func GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*Tran
 				&lg.BlockID,
 				&lg.TransactionID,
 				&lg.TransactionReceiptID)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
 			topics, err := GetTransactionLogTopics(ctx, lg.ID)
 			if err != nil {
 				log.Println(err)

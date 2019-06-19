@@ -155,6 +155,10 @@ func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*Transac
 				&receipt.PostState,
 				&receipt.BlockID,
 				&receipt.TransactionID)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
 			tlogs, err := GetTransactionLogs(ctx, receipt.ID)
 			if err != nil {
 				log.Println(err)

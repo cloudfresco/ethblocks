@@ -186,6 +186,10 @@ func GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
 				&blk.Difficulty,
 				&blk.BlockSize,
 				&blk.BlockID)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
 
 			blockuncles = append(blockuncles, &blk)
 		}
