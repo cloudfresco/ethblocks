@@ -44,21 +44,21 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			log.Println(err)
 			return nil, err
 		}
-		bl := Block{}
-		bl.BlockNumber = block.Number().Uint64()
-		bl.BlockTime = block.Time()
-		bl.ParentHash = block.ParentHash().Hex()
-		bl.UncleHash = block.UncleHash().Hex()
-		bl.BlockRoot = block.Root().Hex()
-		bl.TxHash = block.TxHash().Hex()
-		bl.ReceiptHash = block.ReceiptHash().Hex()
-		bl.MixDigest = block.MixDigest().Hex()
-		bl.BlockNonce = block.Nonce()
-		bl.Coinbase = block.Coinbase().Hex()
-		bl.GasLimit = block.GasLimit()
-		bl.GasUsed = block.GasUsed()
-		bl.Difficulty = block.Difficulty().Uint64()
-		bl.BlockSize = block.Size()
+		blk := Block{}
+		blk.BlockNumber = block.Number().Uint64()
+		blk.BlockTime = block.Time()
+		blk.ParentHash = block.ParentHash().Hex()
+		blk.UncleHash = block.UncleHash().Hex()
+		blk.BlockRoot = block.Root().Hex()
+		blk.TxHash = block.TxHash().Hex()
+		blk.ReceiptHash = block.ReceiptHash().Hex()
+		blk.MixDigest = block.MixDigest().Hex()
+		blk.BlockNonce = block.Nonce()
+		blk.Coinbase = block.Coinbase().Hex()
+		blk.GasLimit = block.GasLimit()
+		blk.GasUsed = block.GasUsed()
+		blk.Difficulty = block.Difficulty().Uint64()
+		blk.BlockSize = block.Size()
 		db := appState.Db
 		tx, err := db.Begin()
 		if err != nil {
@@ -66,7 +66,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			err = tx.Rollback()
 			return nil, err
 		}
-		blk, err := InsertBlock(ctx, tx, bl)
+		err = InsertBlock(ctx, tx, &blk)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -83,7 +83,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			uncles = append(uncles, uncle)
 		}
 		blk.BlockUncles = uncles
-		err = CreateBlockTransaction(ctx, client, tx, blk, block)
+		err = CreateBlockTransaction(ctx, client, tx, &blk, block)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -95,70 +95,76 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return blk, err
+		return &blk, err
 	}
 }
 
 // CreateBlockTransaction - add a block transaction to the db
 func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error {
-	transactions := []*Transaction{}
-	for _, tns := range GetTransactions(block) {
-		transaction, err := AddTransaction(ctx, tx, tns, blk.ID, blk.BlockNumber)
-		if err != nil {
-			log.Println(err)
-			err = tx.Rollback()
-			return err
-		}
-
-		receipt, err := GetTransactionReceipt(ctx, client, tns.Hash())
-		if err != nil {
-			log.Println(err)
-			err = tx.Rollback()
-			return err
-		}
-		receipts := []*TransactionReceipt{}
-		treceipt, err := AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
-		if err != nil {
-			log.Println(err)
-			err = tx.Rollback()
-			return err
-		}
-		tlogs := []*TransactionLog{}
-		for _, lg := range GetLogs(receipt) {
-			tlg, err := AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
+	select {
+	case <-ctx.Done():
+		err := errors.New("Client closed connection")
+		return err
+	default:
+		transactions := []*Transaction{}
+		for _, tns := range GetTransactions(block) {
+			transaction, err := AddTransaction(ctx, tx, tns, blk.ID, blk.BlockNumber)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
 				return err
 			}
-			topics := []*TransactionLogTopic{}
-			for _, tpc := range GetTopics(lg) {
-				topic, err := AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+
+			receipt, err := GetTransactionReceipt(ctx, client, tns.Hash())
+			if err != nil {
+				log.Println(err)
+				err = tx.Rollback()
+				return err
+			}
+			receipts := []*TransactionReceipt{}
+			treceipt, err := AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
+			if err != nil {
+				log.Println(err)
+				err = tx.Rollback()
+				return err
+			}
+			tlogs := []*TransactionLog{}
+			for _, lg := range GetLogs(receipt) {
+				tlg, err := AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
 				if err != nil {
 					log.Println(err)
 					err = tx.Rollback()
 					return err
 				}
-				topics = append(topics, topic)
+				topics := []*TransactionLogTopic{}
+				for _, tpc := range GetTopics(lg) {
+					topic, err := AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+					if err != nil {
+						log.Println(err)
+						err = tx.Rollback()
+						return err
+					}
+					topics = append(topics, topic)
+				}
+				tlg.Topics = topics
+				tlogs = append(tlogs, tlg)
 			}
-			tlg.Topics = topics
-			tlogs = append(tlogs, tlg)
+			treceipt.Logs = tlogs
+			receipts = append(receipts, treceipt)
+			transaction.TransactionReceipts = receipts
+			transactions = append(transactions, transaction)
 		}
-		treceipt.Logs = tlogs
-		receipts = append(receipts, treceipt)
-		transaction.TransactionReceipts = receipts
-		transactions = append(transactions, transaction)
+		blk.Transactions = transactions
+		return nil
 	}
-	blk.Transactions = transactions
-	return nil
 }
 
 // InsertBlock - insert block details to db
-func InsertBlock(ctx context.Context, tx *sql.Tx, blk Block) (*Block, error) {
+func InsertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
-		return nil, err
+		return err
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into blocks
 	  ( 
@@ -180,7 +186,7 @@ func InsertBlock(ctx context.Context, tx *sql.Tx, blk Block) (*Block, error) {
           ?,?,?,?);`)
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
 		res, err := stmt.ExecContext(ctx,
 			blk.BlockNumber,
@@ -200,21 +206,21 @@ func InsertBlock(ctx context.Context, tx *sql.Tx, blk Block) (*Block, error) {
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		uID, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		blk.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
-		return &blk, nil
+		return nil
 	}
 }
 

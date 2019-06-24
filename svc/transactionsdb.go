@@ -46,22 +46,22 @@ func AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, Blo
 		bl.TxR = txr.Uint64()
 		bl.TxS = txs.Uint64()
 		bl.BlockID = BlockID
-		transaction, err := InsertTransaction(ctx, tx, bl)
+		err := InsertTransaction(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return transaction, nil
+		return &bl, nil
 	}
 }
 
 // InsertTransaction - insert transaction details to db
-func InsertTransaction(ctx context.Context, tx *sql.Tx, trans Transaction) (*Transaction, error) {
+func InsertTransaction(ctx context.Context, tx *sql.Tx, trans *Transaction) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
-		return nil, err
+		return err
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into transactions
 	  ( 
@@ -80,7 +80,7 @@ func InsertTransaction(ctx context.Context, tx *sql.Tx, trans Transaction) (*Tra
           ?);`)
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
 		res, err := stmt.ExecContext(ctx,
 			trans.BlockNumber,
@@ -97,21 +97,21 @@ func InsertTransaction(ctx context.Context, tx *sql.Tx, trans Transaction) (*Tra
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		uID, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		trans.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
-		return &trans, nil
+		return nil
 	}
 }
 

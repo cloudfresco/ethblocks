@@ -53,22 +53,22 @@ func AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, Bloc
 		bl.Difficulty = blkuncle.Difficulty.Uint64()
 		bl.BlockSize = blkuncle.Size()
 		bl.BlockID = BlockID
-		blockuncle, err := InsertBlockUncle(ctx, tx, bl)
+		err := InsertBlockUncle(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return blockuncle, nil
+		return &bl, nil
 	}
 }
 
 // InsertBlockUncle - insert block uncle details to db
-func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk BlockUncle) (*BlockUncle, error) {
+func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk *BlockUncle) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
-		return nil, err
+		return err
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into block_uncles
 	  ( 
@@ -91,7 +91,7 @@ func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk BlockUncle) (*BlockUn
           ?,?,?,?,?);`)
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
 		res, err := stmt.ExecContext(ctx,
 			blk.BlockNumber,
@@ -112,21 +112,21 @@ func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk BlockUncle) (*BlockUn
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		uID, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		blk.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
-		return &blk, nil
+		return nil
 	}
 }
 

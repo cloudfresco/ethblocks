@@ -45,21 +45,21 @@ func AddTransactionLog(ctx context.Context, tx *sql.Tx, lg *types.Log, BlockID u
 		bl.BlockID = BlockID
 		bl.TransactionID = TransactionID
 		bl.TransactionReceiptID = TransactionReceiptID
-		transactionLog, err := InsertTransactionLog(ctx, tx, bl)
+		err := InsertTransactionLog(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		return transactionLog, nil
+		return &bl, nil
 	}
 }
 
 // InsertTransactionLog - insert transaction Log details to db
-func InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg TransactionLog) (*TransactionLog, error) {
+func InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg *TransactionLog) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
-		return nil, err
+		return err
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into transaction_logs
 	  ( 
@@ -78,7 +78,7 @@ func InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg TransactionLog) (*
           ?);`)
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
 		res, err := stmt.ExecContext(ctx,
 			lg.BlockNumber,
@@ -95,21 +95,21 @@ func InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg TransactionLog) (*
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		uID, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		lg.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
-		return &lg, nil
+		return nil
 	}
 }
 

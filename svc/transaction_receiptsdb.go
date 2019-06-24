@@ -43,22 +43,22 @@ func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Recei
 		bl.PostState = receipt.PostState
 		bl.BlockID = BlockID
 		bl.TransactionID = TransactionID
-		transactionReceipt, err := InsertTransactionReceipt(ctx, tx, bl)
+		err := InsertTransactionReceipt(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return transactionReceipt, nil
+		return &bl, nil
 	}
 }
 
 // InsertTransactionReceipt - insert transaction receipt details to db
-func InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt TransactionReceipt) (*TransactionReceipt, error) {
+func InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *TransactionReceipt) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
-		return nil, err
+		return err
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into transaction_receipts
 	  ( 
@@ -75,7 +75,7 @@ func InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt Transacti
   values (?,?,?,?,?,?,?,?,?,?);`)
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
 		res, err := stmt.ExecContext(ctx,
 			receipt.BlockNumber,
@@ -91,21 +91,21 @@ func InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt Transacti
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		uID, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		receipt.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
-		return &receipt, nil
+		return nil
 	}
 }
 

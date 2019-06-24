@@ -26,27 +26,27 @@ func AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, Bloc
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		bl := TransactionLogTopic{}
-		bl.Topic = s.Hex()
-		bl.BlockID = BlockID
-		bl.TransactionID = TransactionID
-		bl.TransactionReceiptID = TransactionReceiptID
-		bl.TransactionLogID = TransactionLogID
-		transactiontopic, err := InsertTransactionLogTopic(ctx, tx, bl)
+		lt := TransactionLogTopic{}
+		lt.Topic = s.Hex()
+		lt.BlockID = BlockID
+		lt.TransactionID = TransactionID
+		lt.TransactionReceiptID = TransactionReceiptID
+		lt.TransactionLogID = TransactionLogID
+		err := InsertTransactionLogTopic(ctx, tx, &lt)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		return transactiontopic, nil
+		return &lt, nil
 	}
 }
 
 // InsertTransactionLogTopic - insert transaction Topic details to db
-func InsertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt TransactionLogTopic) (*TransactionLogTopic, error) {
+func InsertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt *TransactionLogTopic) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
-		return nil, err
+		return err
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into transaction_log_topics
 	  ( 
@@ -58,7 +58,7 @@ func InsertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt TransactionLo
   values (?,?,?,?,?);`)
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
 		res, err := stmt.ExecContext(ctx,
 			lt.Topic,
@@ -69,21 +69,21 @@ func InsertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt TransactionLo
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		uID, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
-			return nil, err
+			return err
 		}
 		lt.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return err
 		}
-		return &lt, nil
+		return nil
 	}
 }
 
