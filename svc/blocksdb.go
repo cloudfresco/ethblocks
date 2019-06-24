@@ -82,64 +82,75 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			}
 			uncles = append(uncles, uncle)
 		}
-		transactions := []*Transaction{}
-		for _, tns := range GetTransactions(block) {
-			transaction, err := AddTransaction(ctx, tx, tns, blk.ID, bl.BlockNumber)
-			if err != nil {
-				log.Println(err)
-				err = tx.Rollback()
-				return nil, err
-			}
-
-			receipt, err := GetTransactionReceipt(ctx, client, tns.Hash())
-			if err != nil {
-				log.Println(err)
-				err = tx.Rollback()
-				return nil, err
-			}
-			receipts := []*TransactionReceipt{}
-			treceipt, err := AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
-			if err != nil {
-				log.Println(err)
-				err = tx.Rollback()
-				return nil, err
-			}
-			tlogs := []*TransactionLog{}
-			for _, lg := range GetLogs(receipt) {
-				tlg, err := AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
-				if err != nil {
-					log.Println(err)
-					err = tx.Rollback()
-					return nil, err
-				}
-				topics := []*TransactionLogTopic{}
-				for _, tpc := range GetTopics(lg) {
-					topic, err := AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
-					if err != nil {
-						log.Println(err)
-						err = tx.Rollback()
-						return nil, err
-					}
-					topics = append(topics, topic)
-				}
-				tlg.Topics = topics
-				tlogs = append(tlogs, tlg)
-			}
-			treceipt.Logs = tlogs
-			receipts = append(receipts, treceipt)
-			transaction.TransactionReceipts = receipts
-			transactions = append(transactions, transaction)
-		}
 		blk.BlockUncles = uncles
-		blk.Transactions = transactions
+		err = CreateBlockTransaction(ctx, client, tx, blk, block)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return nil, err
+		}
 		err = tx.Commit()
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return blk, nil
+		return blk, err
 	}
+}
+
+// CreateBlockTransaction - add a block transaction to the db
+func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error {
+	transactions := []*Transaction{}
+	for _, tns := range GetTransactions(block) {
+		transaction, err := AddTransaction(ctx, tx, tns, blk.ID, blk.BlockNumber)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return err
+		}
+
+		receipt, err := GetTransactionReceipt(ctx, client, tns.Hash())
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return err
+		}
+		receipts := []*TransactionReceipt{}
+		treceipt, err := AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
+		if err != nil {
+			log.Println(err)
+			err = tx.Rollback()
+			return err
+		}
+		tlogs := []*TransactionLog{}
+		for _, lg := range GetLogs(receipt) {
+			tlg, err := AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
+			if err != nil {
+				log.Println(err)
+				err = tx.Rollback()
+				return err
+			}
+			topics := []*TransactionLogTopic{}
+			for _, tpc := range GetTopics(lg) {
+				topic, err := AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+				if err != nil {
+					log.Println(err)
+					err = tx.Rollback()
+					return err
+				}
+				topics = append(topics, topic)
+			}
+			tlg.Topics = topics
+			tlogs = append(tlogs, tlg)
+		}
+		treceipt.Logs = tlogs
+		receipts = append(receipts, treceipt)
+		transaction.TransactionReceipts = receipts
+		transactions = append(transactions, transaction)
+	}
+	blk.Transactions = transactions
+	return nil
 }
 
 // InsertBlock - insert block details to db
