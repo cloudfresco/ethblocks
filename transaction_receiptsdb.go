@@ -9,6 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// TransactionReceiptIntf interface
+type TransactionReceiptIntf interface {
+	AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error)
+	InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *TransactionReceipt) error
+	GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error)
+}
+
 // TransactionReceipt - Used for
 type TransactionReceipt struct {
 	ID                uint

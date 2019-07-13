@@ -9,6 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// TransactionIntf - interface
+type TransactionIntf interface {
+	AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error)
+	InsertTransaction(ctx context.Context, tx *sql.Tx, trans *Transaction) error
+	GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error)
+}
+
 // Transaction - Used for
 type Transaction struct {
 	ID                  uint

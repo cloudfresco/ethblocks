@@ -11,6 +11,14 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+// BlockIntf interface
+type BlockIntf interface {
+	AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error)
+	CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error
+	InsertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error
+	GetBlock(ctx context.Context, ID uint) (*Block, error)
+}
+
 // Block - Used for
 type Block struct {
 	ID           uint

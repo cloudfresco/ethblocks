@@ -9,6 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// TransactionLogTopicIntf interface
+type TransactionLogTopicIntf interface {
+	AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error)
+	InsertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt *TransactionLogTopic) error
+	GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error)
+}
+
 // TransactionLogTopic - Used for
 type TransactionLogTopic struct {
 	ID                   uint

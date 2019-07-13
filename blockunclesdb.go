@@ -10,6 +10,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// BlockUncleIntf - interface
+type BlockUncleIntf interface {
+	AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error)
+	InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk *BlockUncle) error
+	GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error)
+}
+
 // BlockUncle - Used for
 type BlockUncle struct {
 	ID          uint

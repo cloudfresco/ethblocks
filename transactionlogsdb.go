@@ -9,6 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// TransactionLogIntf - interface
+type TransactionLogIntf interface {
+	AddTransactionLog(ctx context.Context, tx *sql.Tx, lg *types.Log, BlockID uint, TransactionID uint, TransactionReceiptID uint) (*TransactionLog, error)
+	InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg *TransactionLog)
+	GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*TransactionLog, error)
+}
+
 // TransactionLog - Used for
 type TransactionLog struct {
 	ID                   uint
