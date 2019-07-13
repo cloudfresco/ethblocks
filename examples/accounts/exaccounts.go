@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/cloudfresco/ethblocks/svc"
+	"github.com/cloudfresco/ethblocks"
 	_ "github.com/go-sql-driver/mysql"
 )
 

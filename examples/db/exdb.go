@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/cloudfresco/ethblocks/svc"
+	"github.com/cloudfresco/ethblocks"
 	_ "github.com/go-sql-driver/mysql"
 )
 
