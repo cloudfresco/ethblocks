@@ -16,7 +16,7 @@ func main() {
 // ExBlock - Block Examples
 func ExBlock() {
 
-	client, err := svc.GetClient("https://mainnet.infura.io")
+	client, err := ethblocks.GetClient("https://mainnet.infura.io")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,59 +24,59 @@ func ExBlock() {
 
 	blockNumber := big.NewInt(7602500)
 	log.Println("GetBlockByNumber")
-	block, err := svc.GetBlockByNumber(ctx, client, blockNumber)
+	block, err := ethblocks.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
-	svc.PrintBlock(block)
+	ethblocks.PrintBlock(block)
 
 	log.Println("GetBlockByHash")
 	h := block.Hash()
-	block, err = svc.GetBlockByHash(ctx, client, h)
+	block, err = ethblocks.GetBlockByHash(ctx, client, h)
 	if err != nil {
 		log.Fatal(err)
 	}
-	svc.PrintBlock(block)
+	ethblocks.PrintBlock(block)
 
-	blockuncles := svc.GetUncles(block)
+	blockuncles := ethblocks.GetUncles(block)
 	for _, blockuncle := range blockuncles {
-		svc.PrintBlockUncle(blockuncle)
+		ethblocks.PrintBlockUncle(blockuncle)
 	}
 
 	log.Println("GetBlockNumber")
-	blocknumber, err := svc.BlockNumber(ctx, client)
+	blocknumber, err := ethblocks.BlockNumber(ctx, client)
 	log.Println("Blocknumber:", blocknumber)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Println("GetBlocks")
-	blocks, err := svc.GetBlocks(ctx, client, big.NewInt(7602500), big.NewInt(7602509))
+	blocks, err := ethblocks.GetBlocks(ctx, client, big.NewInt(7602500), big.NewInt(7602509))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, b := range blocks {
-		svc.PrintBlock(b)
+		ethblocks.PrintBlock(b)
 	}
 
-	count, err := svc.GetUncleCountByBlockNumber(ctx, client, blockNumber)
+	count, err := ethblocks.GetUncleCountByBlockNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("GetUncleCountByBlockNumber:", count)
 
-	count, err = svc.GetUncleCountByBlockHash(ctx, client, h)
+	count, err = ethblocks.GetUncleCountByBlockHash(ctx, client, h)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("GetUncleCountByBlockHash:", count)
 
 	log.Println("GetBlocksByMiner:")
-	blocks, err = svc.GetBlocksByMiner(ctx, client, "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c", big.NewInt(7602500), big.NewInt(7602509))
+	blocks, err = ethblocks.GetBlocksByMiner(ctx, client, "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c", big.NewInt(7602500), big.NewInt(7602509))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, b := range blocks {
-		svc.PrintBlock(b)
+		ethblocks.PrintBlock(b)
 	}
 }

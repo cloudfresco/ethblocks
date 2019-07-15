@@ -15,30 +15,30 @@ func main() {
 
 // ExTransaction - Transaction Examples
 func ExTransaction() {
-	client, err := svc.GetClient("https://mainnet.infura.io")
+	client, err := ethblocks.GetClient("https://mainnet.infura.io")
 	if err != nil {
 		log.Fatal(err)
 	}
 	ctx := context.Background()
 
-	count, err := svc.GetBlockTransactionCountByNumber(ctx, client)
+	count, err := ethblocks.GetBlockTransactionCountByNumber(ctx, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("GetBlockTransactionCountByNumber :", count)
 
 	blockNumber := big.NewInt(7602500)
-	block, err := svc.GetBlockByNumber(ctx, client, blockNumber)
+	block, err := ethblocks.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	blocktransactions := svc.GetTransactions(block)
+	blocktransactions := ethblocks.GetTransactions(block)
 	for _, blocktransaction := range blocktransactions {
-		svc.PrintTransaction(blocktransaction)
+		ethblocks.PrintTransaction(blocktransaction)
 	}
 
-	count, err = svc.GetBlockTransactionCountByHash(ctx, client, block.Hash())
+	count, err = ethblocks.GetBlockTransactionCountByHash(ctx, client, block.Hash())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,36 +46,36 @@ func ExTransaction() {
 
 	txs := block.Transactions()
 	blockhash := txs[1].Hash()
-	tx, _, err := svc.GetTransactionByHash(ctx, client, blockhash)
+	tx, _, err := ethblocks.GetTransactionByHash(ctx, client, blockhash)
 	if err != nil {
 		log.Fatal(err)
 	}
-	svc.PrintTransaction(tx)
+	ethblocks.PrintTransaction(tx)
 
-	tx, err = svc.GetTransactionByBlockHashAndIndex(ctx, client, block.Hash(), uint(0))
+	tx, err = ethblocks.GetTransactionByBlockHashAndIndex(ctx, client, block.Hash(), uint(0))
 	if err != nil {
 		log.Fatal(err)
 	}
-	svc.PrintTransaction(tx)
+	ethblocks.PrintTransaction(tx)
 
-	txs, err = svc.GetTransactionsByAddress(ctx, client, "0xEec606A66edB6f497662Ea31b5eb1610da87AB5f", big.NewInt(7602500), big.NewInt(7602509))
+	txs, err = ethblocks.GetTransactionsByAddress(ctx, client, "0xEec606A66edB6f497662Ea31b5eb1610da87AB5f", big.NewInt(7602500), big.NewInt(7602509))
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, tx := range txs {
-		svc.PrintTransaction(tx)
+		ethblocks.PrintTransaction(tx)
 	}
 
 	for _, blocktransaction := range blocktransactions {
-		receipt, err := svc.GetTransactionReceipt(ctx, client, blocktransaction.Hash())
+		receipt, err := ethblocks.GetTransactionReceipt(ctx, client, blocktransaction.Hash())
 		if err != nil {
 			log.Fatal(err)
 		}
-		svc.PrintReceipt(receipt)
+		ethblocks.PrintReceipt(receipt)
 		for _, lg := range receipt.Logs {
-			svc.PrintReceiptLog(lg)
+			ethblocks.PrintReceiptLog(lg)
 			for _, topic := range lg.Topics {
-				svc.PrintTopic(topic)
+				ethblocks.PrintTopic(topic)
 			}
 		}
 	}

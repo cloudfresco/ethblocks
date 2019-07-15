@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	client, err := svc.GetClient("https://mainnet.infura.io")
+	client, err := ethblocks.GetClient("https://mainnet.infura.io")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,16 +20,16 @@ func main() {
 
 	blockNumber := big.NewInt(7602500)
 	log.Println("GetBlockByNumber")
-	block, err := svc.GetBlockByNumber(ctx, client, blockNumber)
+	block, err := ethblocks.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	blk1, err := svc.AddBlock(ctx, client, block)
+	blk1, err := ethblocks.AddBlock(ctx, client, block)
 	if err != nil {
 		log.Fatal(err)
 	}
-	blk2, err := svc.GetBlock(ctx, blk1.ID)
+	blk2, err := ethblocks.GetBlock(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func main() {
 }
 
 // compareBlock - Compare block
-func compareBlock(ctx context.Context, blk1 *svc.Block, blk2 *svc.Block) error {
+func compareBlock(ctx context.Context, blk1 *ethblocks.Block, blk2 *ethblocks.Block) error {
 	if reflect.DeepEqual(blk1, blk2) == false {
 		return errors.New("Block Doesnt Match")
 	}
@@ -64,8 +64,8 @@ func compareBlock(ctx context.Context, blk1 *svc.Block, blk2 *svc.Block) error {
 }
 
 // compareBlockUncles - Compare Block Uncles
-func compareBlockUncles(ctx context.Context, blk1 *svc.Block) error {
-	uncles, err := svc.GetBlockUncles(ctx, blk1.ID)
+func compareBlockUncles(ctx context.Context, blk1 *ethblocks.Block) error {
+	uncles, err := ethblocks.GetBlockUncles(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,8 +76,8 @@ func compareBlockUncles(ctx context.Context, blk1 *svc.Block) error {
 }
 
 // compareBlockTransactions - Compare Block Transactions
-func compareBlockTransactions(ctx context.Context, blk1 *svc.Block) error {
-	transactions, err := svc.GetBlockTransactions(ctx, blk1.ID)
+func compareBlockTransactions(ctx context.Context, blk1 *ethblocks.Block) error {
+	transactions, err := ethblocks.GetBlockTransactions(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -89,9 +89,9 @@ func compareBlockTransactions(ctx context.Context, blk1 *svc.Block) error {
 }
 
 // compareReceiptsLogTopics - Compare Receipts Log Topics
-func compareReceiptsLogTopics(ctx context.Context, blk1 *svc.Block) error {
+func compareReceiptsLogTopics(ctx context.Context, blk1 *ethblocks.Block) error {
 	for _, trans := range blk1.Transactions {
-		receipts, err := svc.GetTransactionReceipts(ctx, trans.ID)
+		receipts, err := ethblocks.GetTransactionReceipts(ctx, trans.ID)
 		if err != nil {
 			log.Fatal(err)
 			return err
@@ -100,7 +100,7 @@ func compareReceiptsLogTopics(ctx context.Context, blk1 *svc.Block) error {
 			return errors.New("Block Transaction Receipts Doesnt Match")
 		}
 		for _, receipt := range trans.TransactionReceipts {
-			logs, err := svc.GetTransactionLogs(ctx, receipt.ID)
+			logs, err := ethblocks.GetTransactionLogs(ctx, receipt.ID)
 			if err != nil {
 				log.Fatal(err)
 				return err
@@ -110,7 +110,7 @@ func compareReceiptsLogTopics(ctx context.Context, blk1 *svc.Block) error {
 			}
 
 			for _, lg := range receipt.Logs {
-				topics, err := svc.GetTransactionLogTopics(ctx, lg.ID)
+				topics, err := ethblocks.GetTransactionLogTopics(ctx, lg.ID)
 				if err != nil {
 					log.Fatal(err)
 					return err
