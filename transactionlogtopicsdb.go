@@ -32,23 +32,23 @@ func AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, Bloc
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		lt := TransactionLogTopic{}
-		lt.Topic = s.Hex()
-		lt.BlockID = BlockID
-		lt.TransactionID = TransactionID
-		lt.TransactionReceiptID = TransactionReceiptID
-		lt.TransactionLogID = TransactionLogID
-		err := insertTransactionLogTopic(ctx, tx, &lt)
+		transLogTopic := TransactionLogTopic{}
+		transLogTopic.Topic = s.Hex()
+		transLogTopic.BlockID = BlockID
+		transLogTopic.TransactionID = TransactionID
+		transLogTopic.TransactionReceiptID = TransactionReceiptID
+		transLogTopic.TransactionLogID = TransactionLogID
+		err := insertTransactionLogTopic(ctx, tx, &transLogTopic)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		return &lt, nil
+		return &transLogTopic, nil
 	}
 }
 
 // insertTransactionLogTopic - insert transaction Topic details to db
-func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt *TransactionLogTopic) error {
+func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, transLogTopic *TransactionLogTopic) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -67,11 +67,11 @@ func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt *TransactionL
 			return err
 		}
 		res, err := stmt.ExecContext(ctx,
-			lt.Topic,
-			lt.BlockID,
-			lt.TransactionID,
-			lt.TransactionReceiptID,
-			lt.TransactionLogID)
+			transLogTopic.Topic,
+			transLogTopic.BlockID,
+			transLogTopic.TransactionID,
+			transLogTopic.TransactionReceiptID,
+			transLogTopic.TransactionLogID)
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
@@ -83,7 +83,7 @@ func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, lt *TransactionL
 			err = stmt.Close()
 			return err
 		}
-		lt.ID = uint(uID)
+		transLogTopic.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
@@ -121,19 +121,19 @@ func GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*Tra
 		}
 
 		for rows.Next() {
-			lt := TransactionLogTopic{}
+			transLogTopic := TransactionLogTopic{}
 			err = rows.Scan(
-				&lt.ID,
-				&lt.Topic,
-				&lt.BlockID,
-				&lt.TransactionID,
-				&lt.TransactionReceiptID,
-				&lt.TransactionLogID)
+				&transLogTopic.ID,
+				&transLogTopic.Topic,
+				&transLogTopic.BlockID,
+				&transLogTopic.TransactionID,
+				&transLogTopic.TransactionReceiptID,
+				&transLogTopic.TransactionLogID)
 			if err != nil {
 				log.Println(err)
 				return nil, err
 			}
-			topics = append(topics, &lt)
+			topics = append(topics, &transLogTopic)
 		}
 		err = rows.Close()
 		if err != nil {

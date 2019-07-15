@@ -11,7 +11,7 @@ import (
 
 // TransactionReceiptIntf interface
 type TransactionReceiptIntf interface {
-	AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error)
+	AddTransactionReceipt(ctx context.Context, tx *sql.Tx, ethReceipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error)
 	GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error)
 }
 
@@ -32,35 +32,35 @@ type TransactionReceipt struct {
 }
 
 // AddTransactionReceipt - add a transaction to the db
-func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error) {
+func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, ethReceipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		bl := TransactionReceipt{}
-		bl.BlockNumber = BlockNumber
-		bl.BlockHash = BlockHash
-		bl.TxHash = receipt.TxHash.Hex()
-		bl.TxStatus = receipt.Status
-		bl.CumulativeGasUsed = receipt.CumulativeGasUsed
-		bl.GasUsed = receipt.GasUsed
-		bl.ContractAddress = receipt.ContractAddress.Hex()
-		bl.PostState = receipt.PostState
-		bl.BlockID = BlockID
-		bl.TransactionID = TransactionID
-		err := insertTransactionReceipt(ctx, tx, &bl)
+		transReceipt := TransactionReceipt{}
+		transReceipt.BlockNumber = BlockNumber
+		transReceipt.BlockHash = BlockHash
+		transReceipt.TxHash = ethReceipt.TxHash.Hex()
+		transReceipt.TxStatus = ethReceipt.Status
+		transReceipt.CumulativeGasUsed = ethReceipt.CumulativeGasUsed
+		transReceipt.GasUsed = ethReceipt.GasUsed
+		transReceipt.ContractAddress = ethReceipt.ContractAddress.Hex()
+		transReceipt.PostState = ethReceipt.PostState
+		transReceipt.BlockID = BlockID
+		transReceipt.TransactionID = TransactionID
+		err := insertTransactionReceipt(ctx, tx, &transReceipt)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return &bl, nil
+		return &transReceipt, nil
 	}
 }
 
-// insertTransactionReceipt - insert transaction receipt details to db
-func insertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *TransactionReceipt) error {
+// insertTransactionReceipt - insert transaction Receipt details to db
+func insertTransactionReceipt(ctx context.Context, tx *sql.Tx, transReceipt *TransactionReceipt) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -84,16 +84,16 @@ func insertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *Transact
 			return err
 		}
 		res, err := stmt.ExecContext(ctx,
-			receipt.BlockNumber,
-			receipt.BlockHash,
-			receipt.TxHash,
-			receipt.TxStatus,
-			receipt.CumulativeGasUsed,
-			receipt.GasUsed,
-			receipt.ContractAddress,
-			receipt.PostState,
-			receipt.BlockID,
-			receipt.TransactionID)
+			transReceipt.BlockNumber,
+			transReceipt.BlockHash,
+			transReceipt.TxHash,
+			transReceipt.TxStatus,
+			transReceipt.CumulativeGasUsed,
+			transReceipt.GasUsed,
+			transReceipt.ContractAddress,
+			transReceipt.PostState,
+			transReceipt.BlockID,
+			transReceipt.TransactionID)
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
@@ -105,7 +105,7 @@ func insertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *Transact
 			err = stmt.Close()
 			return err
 		}
-		receipt.ID = uint(uID)
+		transReceipt.ID = uint(uID)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
@@ -128,7 +128,7 @@ func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*Transac
 			return nil, err
 		}
 		db := appState.Db
-		receipts := []*TransactionReceipt{}
+		transreceipts := []*TransactionReceipt{}
 		rows, err := db.QueryContext(ctx, `select
       id,
 			block_number,
@@ -148,30 +148,30 @@ func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*Transac
 		}
 
 		for rows.Next() {
-			receipt := TransactionReceipt{}
+			transReceipt := TransactionReceipt{}
 			err = rows.Scan(
-				&receipt.ID,
-				&receipt.BlockNumber,
-				&receipt.BlockHash,
-				&receipt.TxHash,
-				&receipt.TxStatus,
-				&receipt.CumulativeGasUsed,
-				&receipt.GasUsed,
-				&receipt.ContractAddress,
-				&receipt.PostState,
-				&receipt.BlockID,
-				&receipt.TransactionID)
+				&transReceipt.ID,
+				&transReceipt.BlockNumber,
+				&transReceipt.BlockHash,
+				&transReceipt.TxHash,
+				&transReceipt.TxStatus,
+				&transReceipt.CumulativeGasUsed,
+				&transReceipt.GasUsed,
+				&transReceipt.ContractAddress,
+				&transReceipt.PostState,
+				&transReceipt.BlockID,
+				&transReceipt.TransactionID)
 			if err != nil {
 				log.Println(err)
 				return nil, err
 			}
-			tlogs, err := GetTransactionLogs(ctx, receipt.ID)
+			tlogs, err := GetTransactionLogs(ctx, transReceipt.ID)
 			if err != nil {
 				log.Println(err)
 				return nil, err
 			}
-			receipt.Logs = tlogs
-			receipts = append(receipts, &receipt)
+			transReceipt.Logs = tlogs
+			transreceipts = append(transreceipts, &transReceipt)
 		}
 		err = rows.Close()
 		if err != nil {
@@ -190,6 +190,6 @@ func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*Transac
 			log.Println(err)
 			return nil, err
 		}
-		return receipts, nil
+		return transreceipts, nil
 	}
 }

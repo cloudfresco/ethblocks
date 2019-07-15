@@ -11,7 +11,7 @@ import (
 
 // TransactionIntf - interface
 type TransactionIntf interface {
-	AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error)
+	AddTransaction(ctx context.Context, tx *sql.Tx, ethTrans *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error)
 	GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error)
 }
 
@@ -33,32 +33,32 @@ type Transaction struct {
 }
 
 // AddTransaction - add a transaction to the db
-func AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error) {
+func AddTransaction(ctx context.Context, tx *sql.Tx, ethTrans *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		txv, txr, txs := tns.RawSignatureValues()
-		bl := Transaction{}
-		bl.BlockNumber = BlockNumber
-		bl.BlockHash = tns.Hash().Hex()
-		bl.AccountNonce = tns.Nonce()
-		bl.Price = tns.GasPrice().Uint64()
-		bl.GasLimit = tns.Gas()
-		bl.TxAmount = tns.Value().Uint64()
-		bl.Payload = tns.Data()
-		bl.TxV = txv.Uint64()
-		bl.TxR = txr.Uint64()
-		bl.TxS = txs.Uint64()
-		bl.BlockID = BlockID
-		err := insertTransaction(ctx, tx, &bl)
+		txv, txr, txs := ethTrans.RawSignatureValues()
+		trans := Transaction{}
+		trans.BlockNumber = BlockNumber
+		trans.BlockHash = ethTrans.Hash().Hex()
+		trans.AccountNonce = ethTrans.Nonce()
+		trans.Price = ethTrans.GasPrice().Uint64()
+		trans.GasLimit = ethTrans.Gas()
+		trans.TxAmount = ethTrans.Value().Uint64()
+		trans.Payload = ethTrans.Data()
+		trans.TxV = txv.Uint64()
+		trans.TxR = txr.Uint64()
+		trans.TxS = txs.Uint64()
+		trans.BlockID = BlockID
+		err := insertTransaction(ctx, tx, &trans)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
 			return nil, err
 		}
-		return &bl, nil
+		return &trans, nil
 	}
 }
 
