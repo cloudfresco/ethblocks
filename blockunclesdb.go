@@ -13,7 +13,6 @@ import (
 // BlockUncleIntf - interface
 type BlockUncleIntf interface {
 	AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error)
-	InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk *BlockUncle) error
 	GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error)
 }
 
@@ -60,7 +59,7 @@ func AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, Bloc
 		bl.Difficulty = blkuncle.Difficulty.Uint64()
 		bl.BlockSize = blkuncle.Size()
 		bl.BlockID = BlockID
-		err := InsertBlockUncle(ctx, tx, &bl)
+		err := insertBlockUncle(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -70,8 +69,8 @@ func AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, Bloc
 	}
 }
 
-// InsertBlockUncle - insert block uncle details to db
-func InsertBlockUncle(ctx context.Context, tx *sql.Tx, blk *BlockUncle) error {
+// insertBlockUncle - insert block uncle details to db
+func insertBlockUncle(ctx context.Context, tx *sql.Tx, blk *BlockUncle) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")

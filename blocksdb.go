@@ -15,7 +15,6 @@ import (
 type BlockIntf interface {
 	AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error)
 	CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error
-	InsertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error
 	GetBlock(ctx context.Context, ID uint) (*Block, error)
 }
 
@@ -74,7 +73,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			err = tx.Rollback()
 			return nil, err
 		}
-		err = InsertBlock(ctx, tx, &blk)
+		err = insertBlock(ctx, tx, &blk)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -167,8 +166,8 @@ func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *s
 	}
 }
 
-// InsertBlock - insert block details to db
-func InsertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error {
+// insertBlock - insert block details to db
+func insertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")

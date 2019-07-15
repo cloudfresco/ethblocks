@@ -12,7 +12,6 @@ import (
 // TransactionIntf - interface
 type TransactionIntf interface {
 	AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error)
-	InsertTransaction(ctx context.Context, tx *sql.Tx, trans *Transaction) error
 	GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error)
 }
 
@@ -53,7 +52,7 @@ func AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, Blo
 		bl.TxR = txr.Uint64()
 		bl.TxS = txs.Uint64()
 		bl.BlockID = BlockID
-		err := InsertTransaction(ctx, tx, &bl)
+		err := insertTransaction(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -63,8 +62,8 @@ func AddTransaction(ctx context.Context, tx *sql.Tx, tns *types.Transaction, Blo
 	}
 }
 
-// InsertTransaction - insert transaction details to db
-func InsertTransaction(ctx context.Context, tx *sql.Tx, trans *Transaction) error {
+// insertTransaction - insert transaction details to db
+func insertTransaction(ctx context.Context, tx *sql.Tx, trans *Transaction) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")

@@ -12,7 +12,6 @@ import (
 // TransactionLogIntf - interface
 type TransactionLogIntf interface {
 	AddTransactionLog(ctx context.Context, tx *sql.Tx, lg *types.Log, BlockID uint, TransactionID uint, TransactionReceiptID uint) (*TransactionLog, error)
-	InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg *TransactionLog)
 	GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*TransactionLog, error)
 }
 
@@ -52,7 +51,7 @@ func AddTransactionLog(ctx context.Context, tx *sql.Tx, lg *types.Log, BlockID u
 		bl.BlockID = BlockID
 		bl.TransactionID = TransactionID
 		bl.TransactionReceiptID = TransactionReceiptID
-		err := InsertTransactionLog(ctx, tx, &bl)
+		err := insertTransactionLog(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -61,8 +60,8 @@ func AddTransactionLog(ctx context.Context, tx *sql.Tx, lg *types.Log, BlockID u
 	}
 }
 
-// InsertTransactionLog - insert transaction Log details to db
-func InsertTransactionLog(ctx context.Context, tx *sql.Tx, lg *TransactionLog) error {
+// insertTransactionLog - insert transaction Log details to db
+func insertTransactionLog(ctx context.Context, tx *sql.Tx, lg *TransactionLog) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")

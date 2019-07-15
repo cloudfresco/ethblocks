@@ -12,7 +12,6 @@ import (
 // TransactionReceiptIntf interface
 type TransactionReceiptIntf interface {
 	AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error)
-	InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *TransactionReceipt) error
 	GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error)
 }
 
@@ -50,7 +49,7 @@ func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Recei
 		bl.PostState = receipt.PostState
 		bl.BlockID = BlockID
 		bl.TransactionID = TransactionID
-		err := InsertTransactionReceipt(ctx, tx, &bl)
+		err := insertTransactionReceipt(ctx, tx, &bl)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -60,8 +59,8 @@ func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *types.Recei
 	}
 }
 
-// InsertTransactionReceipt - insert transaction receipt details to db
-func InsertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *TransactionReceipt) error {
+// insertTransactionReceipt - insert transaction receipt details to db
+func insertTransactionReceipt(ctx context.Context, tx *sql.Tx, receipt *TransactionReceipt) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
