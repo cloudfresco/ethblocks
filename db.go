@@ -22,8 +22,8 @@ type DbOptions struct {
 	Schema   string `mapstructure:"database"`
 }
 
-// dbInit - used for database initialization
-func dbInit() (*AppState, error) {
+// DbInit - used for database initialization
+func DbInit() (*AppState, error) {
 
 	var dbOpt DbOptions
 
@@ -54,4 +54,14 @@ func dbInit() (*AppState, error) {
 
 	return appState, nil
 
+}
+
+// DbClose - used for closing database
+func DbClose(db *sql.DB) error {
+	err := db.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }

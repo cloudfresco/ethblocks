@@ -15,6 +15,18 @@ type TransactionIntf interface {
 	GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error)
 }
 
+// TransactionService - For accessing Transaction services
+type TransactionService struct {
+	Db *sql.DB
+}
+
+// NewTransactionService - Create Transaction service
+func NewTransactionService(db *sql.DB) *TransactionService {
+	return &TransactionService{
+		Db: db,
+	}
+}
+
 // Transaction - Used for
 type Transaction struct {
 	ID                  uint
@@ -33,7 +45,7 @@ type Transaction struct {
 }
 
 // AddTransaction - add a transaction to the db
-func AddTransaction(ctx context.Context, tx *sql.Tx, ethTrans *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error) {
+func (t *TransactionService) AddTransaction(ctx context.Context, tx *sql.Tx, ethTrans *types.Transaction, BlockID uint, BlockNumber uint64) (*Transaction, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -122,20 +134,14 @@ func insertTransaction(ctx context.Context, tx *sql.Tx, trans *Transaction) erro
 }
 
 // GetBlockTransactions - used for
-func GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error) {
+func (t *TransactionService) GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		db := appState.Db
 		transactions := []*Transaction{}
-		rows, err := db.QueryContext(ctx, `select
+		rows, err := t.Db.QueryContext(ctx, `select
       id,
 			block_number,
 			block_hash,
@@ -173,7 +179,8 @@ func GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, er
 				log.Println(err)
 				return nil, err
 			}
-			receipts, err := GetTransactionReceipts(ctx, trans.ID)
+			transactionReceiptService := TransactionReceiptService{Db: t.Db}
+			receipts, err := transactionReceiptService.GetTransactionReceipts(ctx, trans.ID)
 			if err != nil {
 				log.Println(err)
 				return nil, err
@@ -195,11 +202,6 @@ func GetBlockTransactions(ctx context.Context, BlockID uint) ([]*Transaction, er
 			return nil, err
 		}
 
-		err = db.Close()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
 		return transactions, nil
 	}
 }

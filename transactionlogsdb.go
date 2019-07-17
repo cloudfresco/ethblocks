@@ -15,6 +15,18 @@ type TransactionLogIntf interface {
 	GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*TransactionLog, error)
 }
 
+// TransactionLogService - For accessing Transaction Log services
+type TransactionLogService struct {
+	Db *sql.DB
+}
+
+// NewTransactionLogService - Create Transaction Log service
+func NewTransactionLogService(db *sql.DB) *TransactionLogService {
+	return &TransactionLogService{
+		Db: db,
+	}
+}
+
 // TransactionLog - Used for
 type TransactionLog struct {
 	ID                   uint
@@ -33,7 +45,7 @@ type TransactionLog struct {
 }
 
 // AddTransactionLog - add a transaction log to the db
-func AddTransactionLog(ctx context.Context, tx *sql.Tx, ethLog *types.Log, BlockID uint, TransactionID uint, TransactionReceiptID uint) (*TransactionLog, error) {
+func (tl *TransactionLogService) AddTransactionLog(ctx context.Context, tx *sql.Tx, ethLog *types.Log, BlockID uint, TransactionID uint, TransactionReceiptID uint) (*TransactionLog, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -120,20 +132,14 @@ func insertTransactionLog(ctx context.Context, tx *sql.Tx, transLog *Transaction
 }
 
 // GetTransactionLogs - used for getting logs by TransactionReceiptID
-func GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*TransactionLog, error) {
+func (tl *TransactionLogService) GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*TransactionLog, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		db := appState.Db
 		transLogs := []*TransactionLog{}
-		rows, err := db.QueryContext(ctx, `select
+		rows, err := tl.Db.QueryContext(ctx, `select
       id,
 			block_number,
 			block_hash,
@@ -171,7 +177,8 @@ func GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*Tran
 				log.Println(err)
 				return nil, err
 			}
-			topics, err := GetTransactionLogTopics(ctx, transLog.ID)
+			transactionLogTopicService := TransactionLogTopicService{Db: tl.Db}
+			topics, err := transactionLogTopicService.GetTransactionLogTopics(ctx, transLog.ID)
 			if err != nil {
 				log.Println(err)
 				return nil, err
@@ -186,12 +193,6 @@ func GetTransactionLogs(ctx context.Context, TransactionReceiptID uint) ([]*Tran
 		}
 
 		err = rows.Err()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-
-		err = db.Close()
 		if err != nil {
 			log.Println(err)
 			return nil, err

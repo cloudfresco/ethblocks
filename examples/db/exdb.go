@@ -24,12 +24,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	blk1, err := ethblocks.AddBlock(ctx, client, block)
+	//create connection
+	appState, err := ethblocks.DbInit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	blk2, err := ethblocks.GetBlock(ctx, blk1.ID)
+	blockService := ethblocks.NewBlockService(appState.Db)
+	blk1, err := blockService.AddBlock(ctx, client, block)
+	if err != nil {
+		log.Fatal(err)
+	}
+	blk2, err := blockService.GetBlock(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,17 +43,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = compareBlockUncles(ctx, blk1)
+	err = compareBlockUncles(ctx, appState, blk1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = compareBlockTransactions(ctx, blk1)
+	err = compareBlockTransactions(ctx, appState, blk1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = compareReceiptsLogTopics(ctx, blk1)
+	err = compareReceiptsLogTopics(ctx, appState, blk1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ethblocks.DbClose(appState.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,8 +73,9 @@ func compareBlock(ctx context.Context, blk1 *ethblocks.Block, blk2 *ethblocks.Bl
 }
 
 // compareBlockUncles - Compare Block Uncles
-func compareBlockUncles(ctx context.Context, blk1 *ethblocks.Block) error {
-	uncles, err := ethblocks.GetBlockUncles(ctx, blk1.ID)
+func compareBlockUncles(ctx context.Context, appState *ethblocks.AppState, blk1 *ethblocks.Block) error {
+	blockUncleService := ethblocks.NewBlockUncleService(appState.Db)
+	uncles, err := blockUncleService.GetBlockUncles(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,8 +86,9 @@ func compareBlockUncles(ctx context.Context, blk1 *ethblocks.Block) error {
 }
 
 // compareBlockTransactions - Compare Block Transactions
-func compareBlockTransactions(ctx context.Context, blk1 *ethblocks.Block) error {
-	transactions, err := ethblocks.GetBlockTransactions(ctx, blk1.ID)
+func compareBlockTransactions(ctx context.Context, appState *ethblocks.AppState, blk1 *ethblocks.Block) error {
+	transactionService := ethblocks.NewTransactionService(appState.Db)
+	transactions, err := transactionService.GetBlockTransactions(ctx, blk1.ID)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -89,9 +100,10 @@ func compareBlockTransactions(ctx context.Context, blk1 *ethblocks.Block) error 
 }
 
 // compareReceiptsLogTopics - Compare Receipts Log Topics
-func compareReceiptsLogTopics(ctx context.Context, blk1 *ethblocks.Block) error {
+func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState, blk1 *ethblocks.Block) error {
 	for _, trans := range blk1.Transactions {
-		receipts, err := ethblocks.GetTransactionReceipts(ctx, trans.ID)
+		transactionReceiptService := ethblocks.NewTransactionReceiptService(appState.Db)
+		receipts, err := transactionReceiptService.GetTransactionReceipts(ctx, trans.ID)
 		if err != nil {
 			log.Fatal(err)
 			return err
@@ -100,7 +112,8 @@ func compareReceiptsLogTopics(ctx context.Context, blk1 *ethblocks.Block) error 
 			return errors.New("Block Transaction Receipts Doesnt Match")
 		}
 		for _, receipt := range trans.TransactionReceipts {
-			logs, err := ethblocks.GetTransactionLogs(ctx, receipt.ID)
+			transactionLogService := ethblocks.NewTransactionLogService(appState.Db)
+			logs, err := transactionLogService.GetTransactionLogs(ctx, receipt.ID)
 			if err != nil {
 				log.Fatal(err)
 				return err
@@ -110,7 +123,8 @@ func compareReceiptsLogTopics(ctx context.Context, blk1 *ethblocks.Block) error 
 			}
 
 			for _, lg := range receipt.Logs {
-				topics, err := ethblocks.GetTransactionLogTopics(ctx, lg.ID)
+				transactionLogTopicService := ethblocks.NewTransactionLogTopicService(appState.Db)
+				topics, err := transactionLogTopicService.GetTransactionLogTopics(ctx, lg.ID)
 				if err != nil {
 					log.Fatal(err)
 					return err

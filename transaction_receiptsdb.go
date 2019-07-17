@@ -15,6 +15,18 @@ type TransactionReceiptIntf interface {
 	GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error)
 }
 
+// TransactionReceiptService - For accessing Transaction Receipt services
+type TransactionReceiptService struct {
+	Db *sql.DB
+}
+
+// NewTransactionReceiptService - Create Transaction Receipt service
+func NewTransactionReceiptService(db *sql.DB) *TransactionReceiptService {
+	return &TransactionReceiptService{
+		Db: db,
+	}
+}
+
 // TransactionReceipt - Used for
 type TransactionReceipt struct {
 	ID                uint
@@ -32,7 +44,7 @@ type TransactionReceipt struct {
 }
 
 // AddTransactionReceipt - add a transaction to the db
-func AddTransactionReceipt(ctx context.Context, tx *sql.Tx, ethReceipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error) {
+func (t *TransactionReceiptService) AddTransactionReceipt(ctx context.Context, tx *sql.Tx, ethReceipt *types.Receipt, BlockID uint, BlockNumber uint64, BlockHash string, TransactionID uint) (*TransactionReceipt, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -116,20 +128,14 @@ func insertTransactionReceipt(ctx context.Context, tx *sql.Tx, transReceipt *Tra
 }
 
 // GetTransactionReceipts - used for getting receipts by TransactionID
-func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error) {
+func (t *TransactionReceiptService) GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*TransactionReceipt, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		db := appState.Db
 		transreceipts := []*TransactionReceipt{}
-		rows, err := db.QueryContext(ctx, `select
+		rows, err := t.Db.QueryContext(ctx, `select
       id,
 			block_number,
 			block_hash,
@@ -165,7 +171,8 @@ func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*Transac
 				log.Println(err)
 				return nil, err
 			}
-			tlogs, err := GetTransactionLogs(ctx, transReceipt.ID)
+			transactionLogService := TransactionLogService{Db: t.Db}
+			tlogs, err := transactionLogService.GetTransactionLogs(ctx, transReceipt.ID)
 			if err != nil {
 				log.Println(err)
 				return nil, err
@@ -185,11 +192,6 @@ func GetTransactionReceipts(ctx context.Context, TransactionID uint) ([]*Transac
 			return nil, err
 		}
 
-		err = db.Close()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
 		return transreceipts, nil
 	}
 }

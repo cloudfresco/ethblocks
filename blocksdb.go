@@ -11,11 +11,23 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// BlockIntf interface
-type BlockIntf interface {
+// BlockServiceIntf - BlockIntf interface for BlockService
+type BlockServiceIntf interface {
 	AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error)
 	CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error
 	GetBlock(ctx context.Context, ID uint) (*Block, error)
+}
+
+// BlockService - For accessing block services
+type BlockService struct {
+	Db *sql.DB
+}
+
+// NewBlockService - Create block service
+func NewBlockService(db *sql.DB) *BlockService {
+	return &BlockService{
+		Db: db,
+	}
 }
 
 // Block - Used for
@@ -40,17 +52,12 @@ type Block struct {
 }
 
 // AddBlock - add a block to the db
-func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error) {
+func (b *BlockService) AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
 		blk := Block{}
 		blk.BlockNumber = block.Number().Uint64()
 		blk.BlockTime = block.Time()
@@ -66,8 +73,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		blk.GasUsed = block.GasUsed()
 		blk.Difficulty = block.Difficulty().Uint64()
 		blk.BlockSize = block.Size()
-		db := appState.Db
-		tx, err := db.Begin()
+		tx, err := b.Db.Begin()
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -81,7 +87,8 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 		}
 		uncles := []*BlockUncle{}
 		for _, blockuncle := range GetUncles(block) {
-			uncle, err := AddBlockUncle(ctx, tx, blockuncle, blk.ID)
+			blockUncleService := BlockUncleService{Db: b.Db}
+			uncle, err := blockUncleService.AddBlockUncle(ctx, tx, blockuncle, blk.ID)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -90,7 +97,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 			uncles = append(uncles, uncle)
 		}
 		blk.BlockUncles = uncles
-		err = CreateBlockTransaction(ctx, client, tx, &blk, block)
+		err = b.CreateBlockTransaction(ctx, client, tx, &blk, block)
 		if err != nil {
 			log.Println(err)
 			err = tx.Rollback()
@@ -107,7 +114,7 @@ func AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block)
 }
 
 // CreateBlockTransaction - add a block transaction to the db
-func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error {
+func (b *BlockService) CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -115,7 +122,8 @@ func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *s
 	default:
 		transactions := []*Transaction{}
 		for _, tns := range GetTransactions(block) {
-			transaction, err := AddTransaction(ctx, tx, tns, blk.ID, blk.BlockNumber)
+			transactionService := TransactionService{Db: b.Db}
+			transaction, err := transactionService.AddTransaction(ctx, tx, tns, blk.ID, blk.BlockNumber)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -129,7 +137,8 @@ func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *s
 				return err
 			}
 			receipts := []*TransactionReceipt{}
-			treceipt, err := AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
+			transactionReceiptService := TransactionReceiptService{Db: b.Db}
+			treceipt, err := transactionReceiptService.AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -137,7 +146,8 @@ func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *s
 			}
 			tlogs := []*TransactionLog{}
 			for _, lg := range GetLogs(receipt) {
-				tlg, err := AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
+				transactionLogService := TransactionLogService{Db: b.Db}
+				tlg, err := transactionLogService.AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
 				if err != nil {
 					log.Println(err)
 					err = tx.Rollback()
@@ -145,7 +155,8 @@ func CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *s
 				}
 				topics := []*TransactionLogTopic{}
 				for _, tpc := range GetTopics(lg) {
-					topic, err := AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+					transactionLogTopicService := TransactionLogTopicService{Db: b.Db}
+					topic, err := transactionLogTopicService.AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
 					if err != nil {
 						log.Println(err)
 						err = tx.Rollback()
@@ -232,20 +243,14 @@ func insertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error {
 }
 
 // GetBlock - used for
-func GetBlock(ctx context.Context, ID uint) (*Block, error) {
+func (b *BlockService) GetBlock(ctx context.Context, ID uint) (*Block, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		db := appState.Db
 		blk := Block{}
-		row := db.QueryRowContext(ctx, `select
+		row := b.Db.QueryRowContext(ctx, `select
       id,
 			block_number,
 			block_time,
@@ -262,7 +267,7 @@ func GetBlock(ctx context.Context, ID uint) (*Block, error) {
 			difficulty,
 			block_size from blocks where id = ?;`, ID)
 
-		err = row.Scan(
+		err := row.Scan(
 			&blk.ID,
 			&blk.BlockNumber,
 			&blk.BlockTime,
@@ -283,23 +288,20 @@ func GetBlock(ctx context.Context, ID uint) (*Block, error) {
 			log.Println(err)
 			return nil, err
 		}
-		uncles, err := GetBlockUncles(ctx, ID)
+		blockUncleService := BlockUncleService{Db: b.Db}
+		uncles, err := blockUncleService.GetBlockUncles(ctx, ID)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
-		transactions, err := GetBlockTransactions(ctx, ID)
+		transactionsService := TransactionService{Db: b.Db}
+		transactions, err := transactionsService.GetBlockTransactions(ctx, ID)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
 		blk.BlockUncles = uncles
 		blk.Transactions = transactions
-		err = db.Close()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
 
 		return &blk, nil
 	}

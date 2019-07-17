@@ -16,6 +16,18 @@ type BlockUncleIntf interface {
 	GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error)
 }
 
+// BlockUncleService - For accessing Block Uncle services
+type BlockUncleService struct {
+	Db *sql.DB
+}
+
+// NewBlockUncleService - Create Block Uncle service
+func NewBlockUncleService(db *sql.DB) *BlockUncleService {
+	return &BlockUncleService{
+		Db: db,
+	}
+}
+
 // BlockUncle - Used for
 type BlockUncle struct {
 	ID          uint
@@ -37,7 +49,7 @@ type BlockUncle struct {
 }
 
 // AddBlockUncle - add a block uncle to the db
-func AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error) {
+func (bu *BlockUncleService) AddBlockUncle(ctx context.Context, tx *sql.Tx, blkuncle *types.Header, BlockID uint) (*BlockUncle, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -137,20 +149,14 @@ func insertBlockUncle(ctx context.Context, tx *sql.Tx, blk *BlockUncle) error {
 }
 
 // GetBlockUncles - used for
-func GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
+func (bu *BlockUncleService) GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		db := appState.Db
 		blockuncles := []*BlockUncle{}
-		rows, err := db.QueryContext(ctx, `select 
+		rows, err := bu.Db.QueryContext(ctx, `select 
     id,
 		block_number,
 		block_time,
@@ -211,11 +217,6 @@ func GetBlockUncles(ctx context.Context, BlockID uint) ([]*BlockUncle, error) {
 			return nil, err
 		}
 
-		err = db.Close()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
 		return blockuncles, nil
 	}
 }

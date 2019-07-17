@@ -15,6 +15,18 @@ type TransactionLogTopicIntf interface {
 	GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error)
 }
 
+// TransactionLogTopicService - For accessing Transaction Log Topic services
+type TransactionLogTopicService struct {
+	Db *sql.DB
+}
+
+// NewTransactionLogTopicService - Create Transaction Log Topic service
+func NewTransactionLogTopicService(db *sql.DB) *TransactionLogTopicService {
+	return &TransactionLogTopicService{
+		Db: db,
+	}
+}
+
 // TransactionLogTopic - Used for
 type TransactionLogTopic struct {
 	ID                   uint
@@ -26,7 +38,7 @@ type TransactionLogTopic struct {
 }
 
 // AddTransactionLogTopic - add a transaction Topic to the db
-func AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error) {
+func (t *TransactionLogTopicService) AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -94,20 +106,14 @@ func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, transLogTopic *T
 }
 
 // GetTransactionLogTopics - used for getting topics by TransactionLogID
-func GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error) {
+func (t *TransactionLogTopicService) GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
 		return nil, err
 	default:
-		appState, err := dbInit()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		db := appState.Db
 		topics := []*TransactionLogTopic{}
-		rows, err := db.QueryContext(ctx, `select
+		rows, err := t.Db.QueryContext(ctx, `select
       id,
       topic,
 			block_id,
@@ -147,11 +153,6 @@ func GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*Tra
 			return nil, err
 		}
 
-		err = db.Close()
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
 		return topics, nil
 	}
 }
