@@ -13,9 +13,9 @@ before_script:
  - export ETHBLOCKS_DBHOST=localhost
  - export ETHBLOCKS_DBPORT=3306
  - export ETHBLOCKS_DBUSER_TEST=travis
- - export ETHBLOCKS_DBPASS_TEST=p 
+ - export ETHBLOCKS_DBPASS_TEST=p
  - export ETHBLOCKS_DBNAME_TEST=ethblocks_test
- - export ETHBLOCKS_DBPASSROOT=p 
+ - export ETHBLOCKS_DBPASSROOT=p
 script:
  - make
  - make test
