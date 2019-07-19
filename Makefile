@@ -2,6 +2,7 @@
 SHELL := /bin/bash
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 PKGS = ./...
+
 .PHONY: all build test fmt vet lint err doc
 
 all: chk build
@@ -13,7 +14,15 @@ build:
 	@go build $(PKGS)
 
 test:
-	@echo "Starting tests"	
+	@echo "Starting tests"
+
+	-@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e 'DROP DATABASE $(ETHBLOCKS_DBNAME_TEST);'
+	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e 'CREATE DATABASE $(ETHBLOCKS_DBNAME_TEST);'
+	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e "GRANT ALL ON *.* TO '$(ETHBLOCKS_DBUSER_TEST)'@'$(ETHBLOCKS_DBHOST)';"
+	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e 'FLUSH PRIVILEGES;'
+	@mysql -u$(ETHBLOCKS_DBUSER_TEST) -p$(ETHBLOCKS_DBPASS_TEST)  $(ETHBLOCKS_DBNAME_TEST) < sql/mysql/ethblocks.sql
+
+	
 	@go test -v $(PKGS)
 
 fmt:

@@ -1,10 +1,18 @@
 language: go
 go:
  - 1.12.x
-env:
- - GO111MODULE=on
+services:
+ - mysql
 notifications:
  email: false
+before_script: 				
+ - export GO111MODULE=on
+ - export ETHBLOCKS_DB=mysql
+ - export ETHBLOCKS_DBUSER_TEST=travis
+ - export ETHBLOCKS_DBPASS_TEST=
+ - export ETHBLOCKS_DBHOST=localhost
+ - export ETHBLOCKS_DBPORT=3306
+ - export ETHBLOCKS_DBNAME=ethblocks_test
 script:
  - make
  - make test
