@@ -6,9 +6,9 @@ services:
 notifications:
  email: false
 before_script:
- - echo "USE mysql;\nUPDATE mysql.user SET authentication_string=PASSWORD('p') WHERE user='travis';\nFLUSH PRIVILEGES;\n" | mysql -u root				
- - echo "USE mysql;\nUPDATE mysql.user SET authentication_string=PASSWORD('p') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root 				
  - export GO111MODULE=on
+ - echo "USE mysql;\nSET PASSWORD FOR 'travis'@'localhost' = PASSWORD('p');\nFLUSH PRIVILEGES;\n" | mysql -u root				
+ - echo "USE mysql;\nSET PASSWORD FOR 'root'@'localhost' = PASSWORD('p');\nFLUSH PRIVILEGES;\n" | mysql -u root 				
  - export ETHBLOCKS_DB=mysql
  - export ETHBLOCKS_DBHOST=localhost
  - export ETHBLOCKS_DBPORT=3306
