@@ -5,15 +5,17 @@ services:
  - mysql
 notifications:
  email: false
-before_script: 				
+before_script:
+ - echo "USE mysql;\nUPDATE user SET password=PASSWORD('p') WHERE user='root';\nFLUSH PRIVILEGES;\n" 				
+ - echo "USE mysql;\nUPDATE user SET password=PASSWORD('p') WHERE user='travis';\nFLUSH PRIVILEGES;\n" 				
  - export GO111MODULE=on
  - export ETHBLOCKS_DB=mysql
  - export ETHBLOCKS_DBHOST=localhost
  - export ETHBLOCKS_DBPORT=3306
  - export ETHBLOCKS_DBUSER_TEST=travis
- - export ETHBLOCKS_DBPASS_TEST= 
+ - export ETHBLOCKS_DBPASS_TEST=p 
  - export ETHBLOCKS_DBNAME_TEST=ethblocks_test
- - export ETHBLOCKS_DBPASSROOT= 
+ - export ETHBLOCKS_DBPASSROOT=p 
 script:
  - make
  - make test
