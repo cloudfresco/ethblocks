@@ -9,7 +9,8 @@ import (
 
 // AppState - used for
 type AppState struct {
-	Db *sql.DB
+	DbType string
+	Db     *sql.DB
 }
 
 // DbOptions - used for
@@ -50,6 +51,7 @@ func DbInit() (*AppState, error) {
 		return nil, err
 	}
 	appState := &AppState{}
+	appState.DbType = dbOpt.DB
 	appState.Db = db
 
 	return appState, nil
