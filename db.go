@@ -7,6 +7,12 @@ import (
 	"log"
 )
 
+// DbMysql for DbType is mysql
+const DbMysql string = "mysql"
+
+// DbPgsql for DbType is pgsql
+const DbPgsql string = "pgsql"
+
 // AppState - used for
 type AppState struct {
 	DbType string
@@ -27,6 +33,8 @@ type DbOptions struct {
 func DbInit() (*AppState, error) {
 
 	var dbOpt DbOptions
+	var db *sql.DB
+	var err error
 
 	v := viper.New()
 	v.AutomaticEnv()
@@ -38,11 +46,15 @@ func DbInit() (*AppState, error) {
 	dbOpt.Port = v.GetString("ETHBLOCKS_DBPORT")
 	dbOpt.Schema = v.GetString("ETHBLOCKS_DBNAME")
 
-	db, err := sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
-		":", dbOpt.Port, ")/", dbOpt.Schema, "?charset=utf8mb4&parseTime=True"))
-	if err != nil {
-		log.Println(err)
-		return nil, err
+	if dbOpt.DB == DbMysql {
+		db, err = sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
+			":", dbOpt.Port, ")/", dbOpt.Schema, "?charset=utf8mb4&parseTime=True"))
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+	} else if dbOpt.DB == DbPgsql {
+
 	}
 	// make sure connection is available
 	err = db.Ping()
@@ -50,6 +62,7 @@ func DbInit() (*AppState, error) {
 		log.Println(err)
 		return nil, err
 	}
+
 	appState := &AppState{}
 	appState.DbType = dbOpt.DB
 	appState.Db = db

@@ -12,6 +12,8 @@ import (
 func DbInitTest() (*AppState, error) {
 
 	var dbOpt DbOptions
+	var db *sql.DB
+	var err error
 
 	v := viper.New()
 	v.AutomaticEnv()
@@ -23,18 +25,24 @@ func DbInitTest() (*AppState, error) {
 	dbOpt.Port = v.GetString("ETHBLOCKS_DBPORT")
 	dbOpt.Schema = v.GetString("ETHBLOCKS_DBNAME_TEST")
 
-	db, err := sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
-		":", dbOpt.Port, ")/", dbOpt.Schema, "?charset=utf8mb4&parseTime=True"))
-	if err != nil {
-		log.Println(err)
-		return nil, err
+	if dbOpt.DB == DbMysql {
+		db, err = sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
+			":", dbOpt.Port, ")/", dbOpt.Schema, "?charset=utf8mb4&parseTime=True"))
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+	} else if dbOpt.DB == DbPgsql {
+
 	}
+
 	// make sure connection is available
 	err = db.Ping()
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
+
 	appState := &AppState{}
 	appState.DbType = dbOpt.DB
 	appState.Db = db
@@ -47,13 +55,13 @@ func DbInitTest() (*AppState, error) {
 func FixturesInit(dbType string, db *sql.DB) (*testfixtures.Context, error) {
 	var err error
 	var fixtures *testfixtures.Context
-	if dbType == "mysql" {
+	if dbType == DbMysql {
 		fixtures, err = testfixtures.NewFolder(db, &testfixtures.MySQL{}, "fixtures")
 		if err != nil {
 			log.Println(err)
 			return fixtures, err
 		}
-	} else if dbType == "pgsql" {
+	} else if dbType == DbPgsql {
 		fixtures, err = testfixtures.NewFolder(db, &testfixtures.PostgreSQL{}, "testdata/fixtures")
 		if err != nil {
 			log.Println(err)
