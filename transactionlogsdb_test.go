@@ -25,6 +25,9 @@ func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 	}
 	transactions := GetTransactions(block1)
 	receipt, err := GetTransactionReceipt(ctx, client, transactions[1].Hash())
+	if err != nil {
+		log.Fatal(err)
+	}
 	tlogs := GetLogs(receipt)
 	tlog := tlogs[0]
 
@@ -35,6 +38,9 @@ func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 	transactionLogService := NewTransactionLogService(appState.Db)
 
 	tx, err := appState.Db.Begin()
+	if err != nil {
+		log.Println("err", err)
+	}
 	transLog := TransactionLog{}
 	transLog.ID = uint(66)
 	transLog.BlockNumber = uint64(7602500)

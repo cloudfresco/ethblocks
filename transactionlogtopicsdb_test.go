@@ -25,6 +25,9 @@ func TestTransactionLogTopicService_AddTransactionLogTopic(t *testing.T) {
 	}
 	transactions := GetTransactions(block1)
 	receipt, err := GetTransactionReceipt(ctx, client, transactions[1].Hash())
+	if err != nil {
+		log.Fatal(err)
+	}
 	tlogs := GetLogs(receipt)
 	tlog := tlogs[0]
 	topics := GetTopics(tlog)
@@ -36,7 +39,9 @@ func TestTransactionLogTopicService_AddTransactionLogTopic(t *testing.T) {
 	transactionLogTopicService := NewTransactionLogTopicService(appState.Db)
 
 	tx, err := appState.Db.Begin()
-
+	if err != nil {
+		log.Println("err", err)
+	}
 	transLogTopic := TransactionLogTopic{}
 	transLogTopic.ID = uint(175)
 	transLogTopic.Topic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"

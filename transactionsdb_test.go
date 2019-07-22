@@ -31,6 +31,9 @@ func TestTransactionService_AddTransaction(t *testing.T) {
 	}
 	transactionService := NewTransactionService(appState.Db)
 	tx, err := appState.Db.Begin()
+	if err != nil {
+		log.Println("err", err)
+	}
 	t1 := Transaction{}
 	t1.ID = uint(103)
 	t1.BlockNumber = uint64(7602500)

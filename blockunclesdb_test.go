@@ -28,11 +28,14 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 	uncles := GetUncles(block1)
 	err = fixtures.Load()
 	if err != nil {
-		log.Println("err", err)
+		log.Println(err)
 	}
+
 	blockUncleService := NewBlockUncleService(appState.Db)
 	tx, err := appState.Db.Begin()
-
+	if err != nil {
+		log.Println("err", err)
+	}
 	bu1 := BlockUncle{}
 	bu1.ID = uint(3)
 	bu1.BlockNumber = uint64(7602499)

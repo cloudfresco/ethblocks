@@ -25,7 +25,9 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 	}
 	transactions := GetTransactions(block1)
 	receipt, err := GetTransactionReceipt(ctx, client, transactions[0].Hash())
-
+	if err != nil {
+		log.Println("err", err)
+	}
 	// load data into the test db
 	err = fixtures.Load()
 	if err != nil {
@@ -33,6 +35,9 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 	}
 	transactionReceiptService := NewTransactionReceiptService(appState.Db)
 	tx, err := appState.Db.Begin()
+	if err != nil {
+		log.Println("err", err)
+	}
 	transReceipt := TransactionReceipt{}
 	transReceipt.ID = uint(103)
 	transReceipt.BlockNumber = uint64(7602500)
