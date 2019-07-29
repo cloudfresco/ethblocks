@@ -29,10 +29,12 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 		log.Println("err", err)
 	}
 	// load data into the test db
-	err = fixtures.Load()
+	err = LoadSQL(appState)
 	if err != nil {
-		log.Println("err", err)
+		log.Println(err)
+		return
 	}
+
 	transactionReceiptService := NewTransactionReceiptService(appState.Db)
 	tx, err := appState.Db.Begin()
 	if err != nil {
@@ -91,15 +93,19 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 			t.Errorf("TransactionReceiptService.AddTransactionReceipt() = %v, want %v", got, tt.want)
 		}
 	}
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+	}
+	err = DeleteSQL(appState)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func TestTransactionReceiptService_GetTransactionReceipts(t *testing.T) {
 	ctx := context.Background()
-	// load data into the test db
-	err := fixtures.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	transactionReceiptService := NewTransactionReceiptService(appState.Db)
 

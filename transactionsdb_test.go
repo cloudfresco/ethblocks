@@ -25,10 +25,12 @@ func TestTransactionService_AddTransaction(t *testing.T) {
 	}
 	transactions := GetTransactions(block1)
 
-	err = fixtures.Load()
+	err = LoadSQL(appState)
 	if err != nil {
-		log.Println("err", err)
+		log.Println(err)
+		return
 	}
+
 	transactionService := NewTransactionService(appState.Db)
 	tx, err := appState.Db.Begin()
 	if err != nil {
@@ -84,14 +86,19 @@ func TestTransactionService_AddTransaction(t *testing.T) {
 			t.Errorf("TransactionService.AddTransaction() = %v, want %v", got, tt.want)
 		}
 	}
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+	}
+	err = DeleteSQL(appState)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func TestTransactionService_GetBlockTransactions(t *testing.T) {
 	ctx := context.Background()
-	err := fixtures.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	transactionService := NewTransactionService(appState.Db)
 

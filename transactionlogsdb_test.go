@@ -31,10 +31,12 @@ func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 	tlogs := GetLogs(receipt)
 	tlog := tlogs[0]
 
-	err = fixtures.Load()
+	err = LoadSQL(appState)
 	if err != nil {
-		log.Println("err", err)
+		log.Println(err)
+		return
 	}
+
 	transactionLogService := NewTransactionLogService(appState.Db)
 
 	tx, err := appState.Db.Begin()
@@ -93,14 +95,19 @@ func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 			t.Errorf("TransactionLogService.AddTransactionLog() = %v, want %v", got, tt.want)
 		}
 	}
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+	}
+	err = DeleteSQL(appState)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func TestTransactionLogService_GetTransactionLogs(t *testing.T) {
 	ctx := context.Background()
-	err := fixtures.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	transactionLogService := NewTransactionLogService(appState.Db)
 

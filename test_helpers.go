@@ -1,16 +1,18 @@
 package ethblocks
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"github.com/spf13/viper"
-	"gopkg.in/testfixtures.v2"
 	"log"
+
+	"github.com/spf13/viper"
+	"io/ioutil"
+	"strings"
 )
 
 // DbInitTest - used for database initialization
 func DbInitTest() (*AppState, error) {
-
 	var dbOpt DbOptions
 	var db *sql.DB
 	var err error
@@ -24,6 +26,8 @@ func DbInitTest() (*AppState, error) {
 	dbOpt.Host = v.GetString("ETHBLOCKS_DBHOST")
 	dbOpt.Port = v.GetString("ETHBLOCKS_DBPORT")
 	dbOpt.Schema = v.GetString("ETHBLOCKS_DBNAME_TEST")
+	dbOpt.MySQLTestFilePath = v.GetString("ETHBLOCKS_DBSQL_MYSQL_TEST")
+	dbOpt.PgSQLTestFilePath = v.GetString("ETHBLOCKS_DBSQL_PGSQL_TEST")
 
 	if dbOpt.DB == DbMysql {
 		db, err = sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
@@ -46,27 +50,83 @@ func DbInitTest() (*AppState, error) {
 	appState := &AppState{}
 	appState.DbType = dbOpt.DB
 	appState.Db = db
-
+	appState.Schema = dbOpt.Schema
+	appState.MySQLTestFilePath = dbOpt.MySQLTestFilePath
+	appState.PgSQLTestFilePath = dbOpt.PgSQLTestFilePath
 	return appState, nil
 
 }
 
-// FixturesInit initialize fixtures
-func FixturesInit(dbType string, db *sql.DB) (*testfixtures.Context, error) {
-	var err error
-	var fixtures *testfixtures.Context
-	if dbType == DbMysql {
-		fixtures, err = testfixtures.NewFolder(db, &testfixtures.MySQL{}, "fixtures")
-		if err != nil {
-			log.Println(err)
-			return fixtures, err
-		}
-	} else if dbType == DbPgsql {
-		fixtures, err = testfixtures.NewFolder(db, &testfixtures.PostgreSQL{}, "testdata/fixtures")
-		if err != nil {
-			log.Println(err)
-			return fixtures, err
+// LoadSQL -- load data into all tables
+func LoadSQL(appState *AppState) error {
+	ctx := context.Background()
+	content, err := ioutil.ReadFile(appState.MySQLTestFilePath)
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	sqlLines := strings.Split(string(content), ";\n")
+
+	for _, sqlLine := range sqlLines {
+
+		if sqlLine != "" {
+			_, err := appState.Db.ExecContext(ctx, sqlLine)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
 		}
 	}
-	return fixtures, nil
+	return nil
+}
+
+// DeleteSQL -- delete data from all tables
+func DeleteSQL(appState *AppState) error {
+	ctx := context.Background()
+	tables := []string{}
+	tableSchema := appState.Schema
+	sql := "select table_name from information_schema.tables where table_schema = " + " '" + tableSchema + "' " + ";"
+	rows, err := appState.Db.QueryContext(ctx, sql)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	var tableName string
+	for rows.Next() {
+		err = rows.Scan(&tableName)
+		if err != nil {
+			log.Println(err)
+			err = rows.Close()
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+			return err
+		}
+		tables = append(tables, tableName)
+	}
+	err = rows.Close()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	for _, tableName := range tables {
+		sql = "truncate " + tableName
+		_, err := appState.Db.ExecContext(ctx, sql)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+	}
+
+	return nil
 }

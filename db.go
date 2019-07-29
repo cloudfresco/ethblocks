@@ -15,18 +15,23 @@ const DbPgsql string = "pgsql"
 
 // AppState - used for
 type AppState struct {
-	DbType string
-	Db     *sql.DB
+	DbType            string
+	Db                *sql.DB
+	Schema            string
+	MySQLTestFilePath string
+	PgSQLTestFilePath string
 }
 
 // DbOptions - used for
 type DbOptions struct {
-	DB       string `mapstructure:"db"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"hostname"`
-	Port     string `mapstructure:"port"`
-	Schema   string `mapstructure:"database"`
+	DB                string `mapstructure:"db"`
+	User              string `mapstructure:"user"`
+	Password          string `mapstructure:"password"`
+	Host              string `mapstructure:"hostname"`
+	Port              string `mapstructure:"port"`
+	Schema            string `mapstructure:"database"`
+	MySQLTestFilePath string `mapstructure:"mysql_test_file_path"`
+	PgSQLTestFilePath string `mapstructure:"pgsql_test_file_path"`
 }
 
 // DbInit - used for database initialization

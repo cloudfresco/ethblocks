@@ -32,10 +32,12 @@ func TestTransactionLogTopicService_AddTransactionLogTopic(t *testing.T) {
 	tlog := tlogs[0]
 	topics := GetTopics(tlog)
 	topic := topics[0]
-	err = fixtures.Load()
+	err = LoadSQL(appState)
 	if err != nil {
-		log.Println("err", err)
+		log.Println(err)
+		return
 	}
+
 	transactionLogTopicService := NewTransactionLogTopicService(appState.Db)
 
 	tx, err := appState.Db.Begin()
@@ -91,14 +93,19 @@ func TestTransactionLogTopicService_AddTransactionLogTopic(t *testing.T) {
 			t.Errorf("TransactionLogTopicService.AddTransactionLogTopic() = %v, want %v", got, tt.want)
 		}
 	}
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+	}
+	err = DeleteSQL(appState)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func TestTransactionLogTopicService_GetTransactionLogTopics(t *testing.T) {
 	ctx := context.Background()
-	err := fixtures.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	transactionLogTopicService := NewTransactionLogTopicService(appState.Db)
 

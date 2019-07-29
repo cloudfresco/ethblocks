@@ -16,25 +16,27 @@ import (
 func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 	client, err := GetClient("https://mainnet.infura.io")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	ctx := context.Background()
 
 	blockNumber := big.NewInt(7602500)
 	block1, err := GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	uncles := GetUncles(block1)
-	err = fixtures.Load()
+
+	err = LoadSQL(appState)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	blockUncleService := NewBlockUncleService(appState.Db)
 	tx, err := appState.Db.Begin()
 	if err != nil {
-		log.Println("err", err)
+		log.Println(err)
 	}
 	bu1 := BlockUncle{}
 	bu1.ID = uint(3)
@@ -88,13 +90,23 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 			t.Errorf("BlockUncleService.AddBlockUncle() = %v, want %v", got, tt.want)
 		}
 	}
+	err = tx.Commit()
+	if err != nil {
+		log.Println(err)
+	}
+	err = DeleteSQL(appState)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func TestBlockUncleService_GetBlockUncles(t *testing.T) {
 	ctx := context.Background()
-	err := fixtures.Load()
+	err := LoadSQL(appState)
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 
 	blockUncleService := NewBlockUncleService(appState.Db)
@@ -168,5 +180,11 @@ func TestBlockUncleService_GetBlockUncles(t *testing.T) {
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("BlockUncleService.GetBlockUncles() = %v, want %v", got, tt.want)
 		}
+	}
+
+	err = DeleteSQL(appState)
+	if err != nil {
+		log.Fatal(err)
+		return
 	}
 }
