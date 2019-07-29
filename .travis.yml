@@ -16,6 +16,7 @@ before_script:
  - export ETHBLOCKS_DBPASS_TEST=p
  - export ETHBLOCKS_DBNAME_TEST=ethblocks_test
  - export ETHBLOCKS_DBPASSROOT=p
+ - export ETHBLOCKS_DBSQL_MYSQL_TEST=$TRAVIS_BUILD_DIR/fixtures/ethblocks_mysql_test.sql
 script:
  - make
  - make test
