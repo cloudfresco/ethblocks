@@ -3,7 +3,6 @@ package ethblocks
 import (
 	"context"
 	"database/sql"
-	"log"
 	"math/big"
 	"reflect"
 	"testing"
@@ -14,26 +13,26 @@ import (
 func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 	client, err := GetClient("https://mainnet.infura.io")
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 	ctx := context.Background()
 
 	blockNumber := big.NewInt(7602500)
-	block1, err := GetBlockByNumber(ctx, client, blockNumber)
+	block, err := GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-	transactions := GetTransactions(block1)
+	transactions := GetTransactions(block)
 	receipt, err := GetTransactionReceipt(ctx, client, transactions[1].Hash())
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 	tlogs := GetLogs(receipt)
 	tlog := tlogs[0]
 
 	err = LoadSQL(appState)
 	if err != nil {
-		log.Println(err)
+		t.Error(err)
 		return
 	}
 
@@ -41,7 +40,7 @@ func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 
 	tx, err := appState.Db.Begin()
 	if err != nil {
-		log.Println("err", err)
+		t.Error("err", err)
 	}
 	transLog := TransactionLog{}
 	transLog.ID = uint(66)
@@ -97,12 +96,7 @@ func TestTransactionLogService_AddTransactionLog(t *testing.T) {
 	}
 	err = tx.Commit()
 	if err != nil {
-		log.Println(err)
-	}
-	err = DeleteSQL(appState)
-	if err != nil {
-		log.Println(err)
-		return
+		t.Error(err)
 	}
 }
 

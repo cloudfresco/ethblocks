@@ -3,7 +3,6 @@ package ethblocks
 import (
 	"context"
 	"database/sql"
-	"log"
 	"math/big"
 	"reflect"
 	"testing"
@@ -14,29 +13,29 @@ import (
 )
 
 func TestBlockUncleService_AddBlockUncle(t *testing.T) {
+
 	client, err := GetClient("https://mainnet.infura.io")
 	if err != nil {
-		log.Println(err)
+		t.Error(err)
 	}
 	ctx := context.Background()
-
 	blockNumber := big.NewInt(7602500)
-	block1, err := GetBlockByNumber(ctx, client, blockNumber)
+	block, err := GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
-		log.Println(err)
+		t.Error(err)
 	}
-	uncles := GetUncles(block1)
-
+	uncles := GetUncles(block)
+	uncle := uncles[0]
 	err = LoadSQL(appState)
 	if err != nil {
-		log.Println(err)
+		t.Error(err)
 		return
 	}
 
 	blockUncleService := NewBlockUncleService(appState.Db)
 	tx, err := appState.Db.Begin()
 	if err != nil {
-		log.Println(err)
+		t.Error(err)
 	}
 	bu1 := BlockUncle{}
 	bu1.ID = uint(3)
@@ -53,7 +52,7 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 	bu1.GasLimit = uint64(8000029)
 	bu1.GasUsed = uint64(6557700)
 	bu1.Difficulty = uint64(1917036994703655)
-	bu1.BlockSize = common.StorageSize(570)
+	bu1.BlockSize = uncle.Size()
 	bu1.BlockID = uint(1)
 
 	type args struct {
@@ -73,7 +72,7 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 			args: args{
 				ctx:      ctx,
 				tx:       tx,
-				blkuncle: uncles[0],
+				blkuncle: uncle,
 				BlockID:  1,
 			},
 			want:    &bu1,
@@ -92,12 +91,7 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 	}
 	err = tx.Commit()
 	if err != nil {
-		log.Println(err)
-	}
-	err = DeleteSQL(appState)
-	if err != nil {
-		log.Println(err)
-		return
+		t.Error(err)
 	}
 }
 
@@ -105,7 +99,7 @@ func TestBlockUncleService_GetBlockUncles(t *testing.T) {
 	ctx := context.Background()
 	err := LoadSQL(appState)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 		return
 	}
 
@@ -182,9 +176,4 @@ func TestBlockUncleService_GetBlockUncles(t *testing.T) {
 		}
 	}
 
-	err = DeleteSQL(appState)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
 }

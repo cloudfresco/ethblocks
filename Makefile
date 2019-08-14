@@ -19,7 +19,7 @@ test:
 	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e 'CREATE DATABASE $(ETHBLOCKS_DBNAME_TEST);'
 	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e "GRANT ALL ON *.* TO '$(ETHBLOCKS_DBUSER_TEST)'@'$(ETHBLOCKS_DBHOST)';"
 	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e 'FLUSH PRIVILEGES;'
-	@mysql -u$(ETHBLOCKS_DBUSER_TEST) -p$(ETHBLOCKS_DBPASS_TEST)  $(ETHBLOCKS_DBNAME_TEST) < sql/mysql/ethblocks.sql
+	@mysql -u$(ETHBLOCKS_DBUSER_TEST) -p$(ETHBLOCKS_DBPASS_TEST)  $(ETHBLOCKS_DBNAME_TEST) < sql/mysql/ethblocks_mysql_schema.sql
 
 	@echo "Starting tests"
 	

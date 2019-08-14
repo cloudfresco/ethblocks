@@ -3,7 +3,6 @@ package ethblocks
 import (
 	"context"
 	"database/sql"
-	"log"
 	"math/big"
 	"reflect"
 	"testing"
@@ -14,31 +13,31 @@ import (
 func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 	client, err := GetClient("https://mainnet.infura.io")
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
 	ctx := context.Background()
 
 	blockNumber := big.NewInt(7602500)
-	block1, err := GetBlockByNumber(ctx, client, blockNumber)
+	block, err := GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-	transactions := GetTransactions(block1)
+	transactions := GetTransactions(block)
 	receipt, err := GetTransactionReceipt(ctx, client, transactions[0].Hash())
 	if err != nil {
-		log.Println("err", err)
+		t.Error("err", err)
 	}
 	// load data into the test db
 	err = LoadSQL(appState)
 	if err != nil {
-		log.Println(err)
+		t.Error(err)
 		return
 	}
 
 	transactionReceiptService := NewTransactionReceiptService(appState.Db)
 	tx, err := appState.Db.Begin()
 	if err != nil {
-		log.Println("err", err)
+		t.Error("err", err)
 	}
 	transReceipt := TransactionReceipt{}
 	transReceipt.ID = uint(103)
@@ -75,8 +74,8 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 				tx:            tx,
 				ethReceipt:    receipt,
 				BlockID:       1,
-				BlockNumber:   block1.Number().Uint64(),
-				BlockHash:     block1.Hash().Hex(),
+				BlockNumber:   block.Number().Uint64(),
+				BlockHash:     block.Hash().Hex(),
 				TransactionID: 1,
 			},
 			want:    &transReceipt,
@@ -95,12 +94,7 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 	}
 	err = tx.Commit()
 	if err != nil {
-		log.Println(err)
-	}
-	err = DeleteSQL(appState)
-	if err != nil {
-		log.Println(err)
-		return
+		t.Error(err)
 	}
 }
 
