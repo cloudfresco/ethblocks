@@ -37,23 +37,23 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	bu1 := BlockUncle{}
-	bu1.ID = uint(3)
-	bu1.BlockNumber = uint64(7602499)
-	bu1.BlockTime = uint64(1555735033)
-	bu1.ParentHash = "0xedc122f4cc5a34ef716487e81df0522d227e0425406357469e141cfbf772da31"
-	bu1.UncleHash = "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
-	bu1.BlockRoot = "0xee5d08e32fe8f2dda82accd4494a27bfd199da34d0c518aa2c2a595a4e423933"
-	bu1.TxHash = "0x817922d3ac2b30577a731ae6a0fa91496a87ce9e2bc64a6b0607c21788237b34"
-	bu1.ReceiptHash = "0xed61edfefe49ba3a263287b3ae6337257b094007f1d05b3f2af612e3080a37dc"
-	bu1.MixDigest = "0x4afc378aaceda9f84aaaca15050f9f7ea24eab2381dd190126ea87cd3e990909"
-	bu1.BlockNonce = uint64(10441032150657948177)
-	bu1.Coinbase = "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5"
-	bu1.GasLimit = uint64(8000029)
-	bu1.GasUsed = uint64(6557700)
-	bu1.Difficulty = uint64(1917036994703655)
-	bu1.BlockSize = uncle.Size()
-	bu1.BlockID = uint(1)
+	bu := BlockUncle{}
+	bu.ID = uint(3)
+	bu.BlockNumber = uint64(7602499)
+	bu.BlockTime = uint64(1555735033)
+	bu.ParentHash = "0xedc122f4cc5a34ef716487e81df0522d227e0425406357469e141cfbf772da31"
+	bu.UncleHash = "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+	bu.BlockRoot = "0xee5d08e32fe8f2dda82accd4494a27bfd199da34d0c518aa2c2a595a4e423933"
+	bu.TxHash = "0x817922d3ac2b30577a731ae6a0fa91496a87ce9e2bc64a6b0607c21788237b34"
+	bu.ReceiptHash = "0xed61edfefe49ba3a263287b3ae6337257b094007f1d05b3f2af612e3080a37dc"
+	bu.MixDigest = "0x4afc378aaceda9f84aaaca15050f9f7ea24eab2381dd190126ea87cd3e990909"
+	bu.BlockNonce = uint64(10441032150657948177)
+	bu.Coinbase = "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5"
+	bu.GasLimit = uint64(8000029)
+	bu.GasUsed = uint64(6557700)
+	bu.Difficulty = uint64(1917036994703655)
+	bu.BlockSize = uncle.Size()
+	bu.BlockID = uint(1)
 
 	type args struct {
 		ctx      context.Context
@@ -75,7 +75,7 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 				blkuncle: uncle,
 				BlockID:  1,
 			},
-			want:    &bu1,
+			want:    &bu,
 			wantErr: false,
 		},
 	}
