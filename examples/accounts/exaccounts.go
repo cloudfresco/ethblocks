@@ -14,8 +14,9 @@ func main() {
 
 // ExAccount - Account Examples
 func ExAccount() {
-	clientaddr := "https://rinkeby.infura.io"
-	client, err := ethblocks.GetClient(clientaddr)
+
+  clientAddr := ethblocks.GetEthblocksClientAddr()
+  client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

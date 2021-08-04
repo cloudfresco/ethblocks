@@ -12,14 +12,15 @@ import (
 )
 
 func main() {
-	client, err := ethblocks.GetClient("https://mainnet.infura.io")
+  clientAddr := ethblocks.GetEthblocksClientAddr()
+  client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	ctx := context.Background()
 
 	blockNumber := big.NewInt(7602500)
-	log.Println("GetBlockByNumber")
+	//log.Println("GetBlockByNumber")
 	block, err := ethblocks.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)

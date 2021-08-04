@@ -11,7 +11,7 @@ import (
 )
 
 func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
-	client, err := GetClient("https://mainnet.infura.io")
+	client, err := GetClient(clientAddr)
 	if err != nil {
 		t.Error(err)
 	}

@@ -8,6 +8,7 @@ import (
 
 var (
 	appState *AppState
+  clientAddr string
 )
 
 func TestMain(m *testing.M) {
@@ -16,6 +17,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
+  clientAddr = GetEthblocksClientAddr()
 	exitVal := m.Run()
 	os.Exit(exitVal)
 }

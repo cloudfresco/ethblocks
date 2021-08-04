@@ -16,7 +16,8 @@ func main() {
 // ExBlock - Block Examples
 func ExBlock() {
 
-	client, err := ethblocks.GetClient("https://mainnet.infura.io")
+	clientAddr := ethblocks.GetEthblocksClientAddr()
+  client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

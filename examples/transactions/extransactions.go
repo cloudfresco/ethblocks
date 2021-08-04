@@ -15,7 +15,8 @@ func main() {
 
 // ExTransaction - Transaction Examples
 func ExTransaction() {
-	client, err := ethblocks.GetClient("https://mainnet.infura.io")
+	clientAddr := ethblocks.GetEthblocksClientAddr()
+  client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
