@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-  clientAddr := ethblocks.GetEthblocksClientAddr()
-  client, err := ethblocks.GetClient(clientAddr)
+	clientAddr := ethblocks.GetEthblocksClientAddr()
+	client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

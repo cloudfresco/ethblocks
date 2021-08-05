@@ -16,7 +16,7 @@ func main() {
 // ExTransaction - Transaction Examples
 func ExTransaction() {
 	clientAddr := ethblocks.GetEthblocksClientAddr()
-  client, err := ethblocks.GetClient(clientAddr)
+	client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

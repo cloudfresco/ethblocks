@@ -17,7 +17,7 @@ func main() {
 func ExBlock() {
 
 	clientAddr := ethblocks.GetEthblocksClientAddr()
-  client, err := ethblocks.GetClient(clientAddr)
+	client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

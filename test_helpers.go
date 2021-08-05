@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+const ethblocksDbsqlMysqlTest = "fixtures/ethblocks_mysql_test.sql"
+const ethblocksDbsqlMysqlSchema = "sql/mysql/ethblocks_mysql_schema.sql"
+const ethblocksDbsqlMysqlTruncate = "fixtures/ethblocks_mysql_truncate.sql"
+
 // DbInitTest - used for database initialization
 func DbInitTest() (*AppState, error) {
 	var dbOpt DbOptions
@@ -26,12 +30,12 @@ func DbInitTest() (*AppState, error) {
 	dbOpt.Host = v.GetString("ETHBLOCKS_DBHOST")
 	dbOpt.Port = v.GetString("ETHBLOCKS_DBPORT")
 	dbOpt.Schema = v.GetString("ETHBLOCKS_DBNAME_TEST")
-	dbOpt.MySQLTestFilePath = v.GetString("ETHBLOCKS_DBSQL_MYSQL_TEST")
-	dbOpt.MySQLSchemaFilePath = v.GetString("ETHBLOCKS_DBSQL_MYSQL_SCHEMA")
-	dbOpt.MySQLTruncateFilePath = v.GetString("ETHBLOCKS_DBSQL_MYSQL_TRUNCATE")
-	dbOpt.PgSQLTestFilePath = v.GetString("ETHBLOCKS_DBSQL_PGSQL_TEST")
-	dbOpt.PgSQLSchemaFilePath = v.GetString("ETHBLOCKS_DBSQL_PGSQL_SCHEMA")
-	dbOpt.PgSQLTruncateFilePath = v.GetString("ETHBLOCKS_DBSQL_PGSQL_TRUNCATE")
+	dbOpt.MySQLTestFilePath = ethblocksDbsqlMysqlTest
+	dbOpt.MySQLSchemaFilePath = ethblocksDbsqlMysqlSchema
+	dbOpt.MySQLTruncateFilePath = ethblocksDbsqlMysqlTruncate
+	dbOpt.PgSQLTestFilePath = ""
+	dbOpt.PgSQLSchemaFilePath = ""
+	dbOpt.PgSQLTruncateFilePath = ""
 	if dbOpt.DB == DbMysql {
 		db, err = sql.Open(dbOpt.DB, fmt.Sprint(dbOpt.User, ":", dbOpt.Password, "@(", dbOpt.Host,
 			":", dbOpt.Port, ")/", dbOpt.Schema, "?charset=utf8mb4&parseTime=True"))
