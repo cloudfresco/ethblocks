@@ -9,7 +9,6 @@ require (
 )
 
 require (
-	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
@@ -33,7 +32,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
