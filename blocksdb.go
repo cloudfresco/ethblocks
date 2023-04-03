@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -46,7 +45,7 @@ type Block struct {
 	GasLimit     uint64
 	GasUsed      uint64
 	Difficulty   uint64
-	BlockSize    common.StorageSize
+	BlockSize    uint64
 	BlockUncles  []*BlockUncle
 	Transactions []*Transaction
 }

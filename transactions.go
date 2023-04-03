@@ -24,13 +24,14 @@ func PrintTransaction(tx *types.Transaction) {
 }
 
 // getSender - Get sender details
+//https://github.com/ethereum/go-ethereum/issues/22918
 func getSender(tx *types.Transaction) string {
-	msg, err := tx.AsMessage(types.NewEIP155Signer(tx.ChainId()), tx.ChainId())
+	from, err := types.Sender(types.LatestSignerForChainID(tx.ChainId()), tx)
 	if err != nil {
 		return ""
 	}
-
-	return msg.From().Hex()
+	
+	return from.Hex()
 }
 
 // GetTransactions - Get Transaction by block
