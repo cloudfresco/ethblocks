@@ -67,7 +67,7 @@ func main() {
 
 // compareBlock - Compare block
 func compareBlock(ctx context.Context, blk1 *ethblocks.Block, blk2 *ethblocks.Block) error {
-	if reflect.DeepEqual(blk1, blk2) == false {
+	if !reflect.DeepEqual(blk1, blk2) {
 		return errors.New("Block Doesnt Match")
 	}
 	return nil
@@ -80,7 +80,7 @@ func compareBlockUncles(ctx context.Context, appState *ethblocks.AppState, blk1 
 	if err != nil {
 		log.Fatal(err)
 	}
-	if reflect.DeepEqual(blk1.BlockUncles, uncles) == false {
+	if !reflect.DeepEqual(blk1.BlockUncles, uncles) {
 		return errors.New("Block Uncles Doesnt Match")
 	}
 	return nil
@@ -94,7 +94,7 @@ func compareBlockTransactions(ctx context.Context, appState *ethblocks.AppState,
 		log.Fatal(err)
 		return err
 	}
-	if reflect.DeepEqual(blk1.Transactions, transactions) == false {
+	if !reflect.DeepEqual(blk1.Transactions, transactions) {
 		return errors.New("Block Transactions Doesnt Match")
 	}
 	return nil
@@ -109,7 +109,7 @@ func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState,
 			log.Fatal(err)
 			return err
 		}
-		if reflect.DeepEqual(receipts, trans.TransactionReceipts) == false {
+		if !reflect.DeepEqual(receipts, trans.TransactionReceipts) {
 			return errors.New("Block Transaction Receipts Doesnt Match")
 		}
 		for _, receipt := range trans.TransactionReceipts {
@@ -119,7 +119,7 @@ func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState,
 				log.Fatal(err)
 				return err
 			}
-			if reflect.DeepEqual(logs, receipt.Logs) == false {
+			if !reflect.DeepEqual(logs, receipt.Logs) {
 				return errors.New("Block Transaction Logs Doesnt Match")
 			}
 
@@ -130,7 +130,7 @@ func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState,
 					log.Fatal(err)
 					return err
 				}
-				if reflect.DeepEqual(topics, lg.Topics) == false {
+				if !reflect.DeepEqual(topics, lg.Topics) {
 					return errors.New("Block Transaction Topics Doesnt Match")
 				}
 			}

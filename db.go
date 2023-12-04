@@ -66,7 +66,6 @@ func DbInit() (*AppState, error) {
 			log.Println(err)
 			return nil, err
 		}
-	} else if dbOpt.DB == DbPgsql {
 	}
 	// make sure connection is available
 	err = db.Ping()

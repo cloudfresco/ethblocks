@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -45,7 +45,6 @@ func DbInitTest() (*AppState, error) {
 			log.Println(err)
 			return nil, err
 		}
-	} else if dbOpt.DB == DbPgsql {
 	}
 
 	// make sure connection is available
@@ -69,7 +68,7 @@ func DbInitTest() (*AppState, error) {
 }
 
 func execSQLFile(ctx context.Context, sqlFilePath string, db *sql.DB) error {
-	content, err := ioutil.ReadFile(sqlFilePath)
+	content, err := os.ReadFile(sqlFilePath)
 	if err != nil {
 		log.Println(err)
 		return err
