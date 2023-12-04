@@ -126,7 +126,6 @@ func TestTransactionLogTopicService_GetTransactionLogTopics(t *testing.T) {
 		},
 	}
 	for range tests {
-
 		/*got, err := tt.t.GetTransactionLogTopics(tt.args.ctx, tt.args.TransactionLogID)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("TransactionLogTopicService.GetTransactionLogTopics() error = %v, wantErr %v", err, tt.wantErr)
@@ -135,6 +134,5 @@ func TestTransactionLogTopicService_GetTransactionLogTopics(t *testing.T) {
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("TransactionLogTopicService.GetTransactionLogTopics() = %v, want %v", got, tt.want)
 		}*/
-
 	}
 }

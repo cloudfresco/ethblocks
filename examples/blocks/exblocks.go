@@ -15,7 +15,6 @@ func main() {
 
 // ExBlock - Block Examples
 func ExBlock() {
-
 	clientAddr := ethblocks.GetEthblocksClientAddr()
 	client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {

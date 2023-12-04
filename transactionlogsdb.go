@@ -152,7 +152,6 @@ func (tl *TransactionLogService) GetTransactionLogs(ctx context.Context, Transac
 			block_id,
 			transaction_id,
 			transaction_receipt_id from transaction_logs where transaction_receipt_id = ?`, TransactionReceiptID)
-
 		if err != nil {
 			log.Println(err)
 			return nil, err

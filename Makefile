@@ -1,14 +1,23 @@
-
 SHELL := /bin/bash
-SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-PKGS = ./...
 
-.PHONY: all build test fmt vet lint err doc
 
-all: chk build
+# go source files, ignore vendor directory
+SRC = $(shell find . -type f -name '*.go' -not -path "./internal/proto-gen/*")
+#SRCPROTO = $(shell find . -type f -name '*.proto'")
+MFILE = cmd/main.go
+EXEC = cmd/etb
+PKGS = $(go list ./... | grep -v /proto/ | grep -v /proto-gen/)
 
-chk: fmt vet lint err
+.PHONY: all chk lint build test clean fmt gocritic staticcheck errcheck revive golangcilint tidy pkgupd doc
 
+all: chk buildp
+
+chk: goimports fmt gocritic staticcheck errcheck
+
+rev: revive
+
+lint: golangcilint
+ 
 build: 
 	@echo "Building ethblocks"	
 	@go build $(PKGS)
@@ -21,31 +30,48 @@ test:
 	@mysql -uroot -p$(ETHBLOCKS_DBPASSROOT) -e 'FLUSH PRIVILEGES;'
 	@mysql -u$(ETHBLOCKS_DBUSER_TEST) -p$(ETHBLOCKS_DBPASS_TEST)  $(ETHBLOCKS_DBNAME_TEST) < sql/mysql/ethblocks_mysql_schema.sql
 
-	@echo "Starting tests"
+	@echo "Starting tests for ethblocks"
 	
 	@go test -v $(PKGS)
 
+clean:
+
+goimports:
+	@echo "Running goimports"		
+	@goimports -l -w $(SRC)
+
 fmt:
-	@echo "Running gofmt"	
+	@echo "Running gofumpt"
+	@gofumpt -l -w .
+	@echo "Running gofmt"		
 	@gofmt -s -l -w $(SRC)
 
-vet:
-	@echo "Running vet"	
-	@go vet $(PKGS)
+gocritic:
+	@echo "Running gocritic"
+	@gocritic check $(SRC)
 
-linter:
-	@go get -u golang.org/x/lint/golint
+staticcheck:
+	@echo "Running staticcheck"
+	@staticcheck ./...
 
-lint: linter
-	@echo "Running lint"
-	@for d in $$(go list ./... | grep -v /vendor/); do golint $${d}; done 
-
-errcheck: 
-	@go get github.com/kisielk/errcheck
-
-err: errcheck 
+errcheck:
 	@echo "Running errcheck"
-	@errcheck $(PKGS)
+	@errcheck ./...
+
+revive:
+	@echo "Running revive"
+	@revive $(SRC)
+
+golangcilint:
+	@echo "Running golangci-lint"
+	@golangci-lint run
+
+tidy:
+	go mod tidy -v -e
+
+pkgupd:
+	go get -u ./...
+	go mod tidy -v -e
 
 doc: 
 

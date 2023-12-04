@@ -4,16 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/spf13/viper"
-	"io/ioutil"
-	"strings"
 )
 
-const ethblocksDbsqlMysqlTest = "fixtures/ethblocks_mysql_test.sql"
-const ethblocksDbsqlMysqlSchema = "sql/mysql/ethblocks_mysql_schema.sql"
-const ethblocksDbsqlMysqlTruncate = "fixtures/ethblocks_mysql_truncate.sql"
+const (
+	ethblocksDbsqlMysqlTest     = "fixtures/ethblocks_mysql_test.sql"
+	ethblocksDbsqlMysqlSchema   = "sql/mysql/ethblocks_mysql_schema.sql"
+	ethblocksDbsqlMysqlTruncate = "fixtures/ethblocks_mysql_truncate.sql"
+)
 
 // DbInitTest - used for database initialization
 func DbInitTest() (*AppState, error) {
@@ -44,7 +46,6 @@ func DbInitTest() (*AppState, error) {
 			return nil, err
 		}
 	} else if dbOpt.DB == DbPgsql {
-
 	}
 
 	// make sure connection is available
@@ -65,13 +66,10 @@ func DbInitTest() (*AppState, error) {
 	appState.PgSQLSchemaFilePath = dbOpt.PgSQLSchemaFilePath
 	appState.PgSQLTruncateFilePath = dbOpt.PgSQLTruncateFilePath
 	return appState, nil
-
 }
 
 func execSQLFile(ctx context.Context, sqlFilePath string, db *sql.DB) error {
-
 	content, err := ioutil.ReadFile(sqlFilePath)
-
 	if err != nil {
 		log.Println(err)
 		return err
@@ -85,7 +83,6 @@ func execSQLFile(ctx context.Context, sqlFilePath string, db *sql.DB) error {
 	sqlLines := strings.Split(string(content), ";\n")
 
 	for _, sqlLine := range sqlLines {
-
 		if sqlLine != "" {
 			_, err := tx.ExecContext(ctx, sqlLine)
 			if err != nil {

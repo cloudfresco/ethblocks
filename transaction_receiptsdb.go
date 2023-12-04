@@ -147,7 +147,6 @@ func (t *TransactionReceiptService) GetTransactionReceipts(ctx context.Context, 
 			post_state,
 			block_id,
 			transaction_id from transaction_receipts where transaction_id = ?`, TransactionID)
-
 		if err != nil {
 			log.Println(err)
 			return nil, err

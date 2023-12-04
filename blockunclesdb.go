@@ -173,7 +173,6 @@ func (bu *BlockUncleService) GetBlockUncles(ctx context.Context, BlockID uint) (
 		difficulty,
 		block_size, 
 		block_id from block_uncles where block_id = ?`, BlockID)
-
 		if err != nil {
 			log.Println(err)
 			return nil, err

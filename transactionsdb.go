@@ -154,7 +154,6 @@ func (t *TransactionService) GetBlockTransactions(ctx context.Context, BlockID u
 			tx_r,
 			tx_s,
 			block_id from transactions where block_id = ?`, BlockID)
-
 		if err != nil {
 			log.Println(err)
 			return nil, err

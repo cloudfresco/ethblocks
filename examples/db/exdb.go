@@ -20,12 +20,12 @@ func main() {
 	ctx := context.Background()
 
 	blockNumber := big.NewInt(7602500)
-	//log.Println("GetBlockByNumber")
+	// log.Println("GetBlockByNumber")
 	block, err := ethblocks.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//create connection
+	// create connection
 	appState, err := ethblocks.DbInit()
 	if err != nil {
 		log.Fatal(err)

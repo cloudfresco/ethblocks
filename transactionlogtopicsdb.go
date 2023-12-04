@@ -120,7 +120,6 @@ func (t *TransactionLogTopicService) GetTransactionLogTopics(ctx context.Context
 			transaction_id,
 			transaction_receipt_id,
       transaction_log_id from transaction_log_topics where transaction_log_id = ?`, TransactionLogID)
-
 		if err != nil {
 			log.Println(err)
 			return nil, err

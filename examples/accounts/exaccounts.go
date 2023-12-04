@@ -14,7 +14,6 @@ func main() {
 
 // ExAccount - Account Examples
 func ExAccount() {
-
 	clientAddr := ethblocks.GetEthblocksClientAddr()
 	client, err := ethblocks.GetClient(clientAddr)
 	if err != nil {
@@ -34,5 +33,4 @@ func ExAccount() {
 		log.Fatal(err)
 	}
 	log.Println("GetPendingBalanceAt:", pendingbalance)
-
 }

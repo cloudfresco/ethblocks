@@ -24,13 +24,13 @@ func PrintTransaction(tx *types.Transaction) {
 }
 
 // getSender - Get sender details
-//https://github.com/ethereum/go-ethereum/issues/22918
+// https://github.com/ethereum/go-ethereum/issues/22918
 func getSender(tx *types.Transaction) string {
 	from, err := types.Sender(types.LatestSignerForChainID(tx.ChainId()), tx)
 	if err != nil {
 		return ""
 	}
-	
+
 	return from.Hex()
 }
 
@@ -83,14 +83,13 @@ func GetTransactionByBlockHashAndIndex(ctx context.Context, client *ethclient.Cl
 // GetTransactionByBlockNumberAndIndex - Get Transaction By BlockNumber And Index
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionbyblocknumberandindex
 func GetTransactionByBlockNumberAndIndex() {
-
 }
 
 // GetTransactionsByAddress - Get Transactions By Address
 func GetTransactionsByAddress(ctx context.Context, client *ethclient.Client, frmaddr string, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Transaction, error) {
 	frmaddress := common.HexToHash(frmaddr)
 	txs := []*types.Transaction{}
-	var one = big.NewInt(1)
+	one := big.NewInt(1)
 	for i := new(big.Int).Set(startBlockNumber); i.Cmp(endBlockNumber) <= 0; i.Add(i, one) {
 		block, err := GetBlockByNumber(ctx, client, i)
 		if err != nil {

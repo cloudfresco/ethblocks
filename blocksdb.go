@@ -282,7 +282,6 @@ func (b *BlockService) GetBlock(ctx context.Context, ID uint) (*Block, error) {
 			&blk.GasUsed,
 			&blk.Difficulty,
 			&blk.BlockSize)
-
 		if err != nil {
 			log.Println(err)
 			return nil, err

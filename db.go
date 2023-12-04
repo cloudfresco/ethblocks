@@ -3,8 +3,9 @@ package ethblocks
 import (
 	"database/sql"
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
+
+	"github.com/spf13/viper"
 )
 
 // DbMysql for DbType is mysql
@@ -44,7 +45,6 @@ type DbOptions struct {
 
 // DbInit - used for database initialization
 func DbInit() (*AppState, error) {
-
 	var dbOpt DbOptions
 	var db *sql.DB
 	var err error
@@ -67,7 +67,6 @@ func DbInit() (*AppState, error) {
 			return nil, err
 		}
 	} else if dbOpt.DB == DbPgsql {
-
 	}
 	// make sure connection is available
 	err = db.Ping()
@@ -81,7 +80,6 @@ func DbInit() (*AppState, error) {
 	appState.Db = db
 
 	return appState, nil
-
 }
 
 // DbClose - used for closing database

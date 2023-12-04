@@ -119,7 +119,6 @@ func TestTransactionService_GetBlockTransactions(t *testing.T) {
 		},
 	}
 	for range tests {
-
 		/*got, err := tt.t.GetBlockTransactions(tt.args.ctx, tt.args.BlockID)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("TransactionService.GetBlockTransactions() error = %v, wantErr %v", err, tt.wantErr)

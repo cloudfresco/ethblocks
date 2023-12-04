@@ -13,7 +13,6 @@ import (
 )
 
 func TestBlockUncleService_AddBlockUncle(t *testing.T) {
-
 	client, err := GetClient(clientAddr)
 	if err != nil {
 		t.Error(err)
@@ -175,5 +174,4 @@ func TestBlockUncleService_GetBlockUncles(t *testing.T) {
 			t.Errorf("BlockUncleService.GetBlockUncles() = %v, want %v", got, tt.want)
 		}
 	}
-
 }

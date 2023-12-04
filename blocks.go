@@ -81,7 +81,7 @@ func BlockNumber(ctx context.Context, client *ethclient.Client) (string, error) 
 // GetBlocks - Get blocks between start and end
 func GetBlocks(ctx context.Context, client *ethclient.Client, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Block, error) {
 	blocks := []*types.Block{}
-	var one = big.NewInt(1)
+	one := big.NewInt(1)
 	for i := new(big.Int).Set(startBlockNumber); i.Cmp(endBlockNumber) <= 0; i.Add(i, one) {
 		block, err := GetBlockByNumber(ctx, client, i)
 		if err != nil {
@@ -122,20 +122,18 @@ func GetUncleCountByBlockHash(ctx context.Context, client *ethclient.Client, has
 // GetUncleByBlockHashAndIndex - Get Uncle By Block Hash and Index
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclebyblockhashandindex
 func GetUncleByBlockHashAndIndex() {
-
 }
 
 // GetUncleByBlockNumberAndIndex - Get Uncle  By Block Number and Index
 // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclebyblocknumberandindex
 func GetUncleByBlockNumberAndIndex() {
-
 }
 
 // GetBlocksByMiner - Get blocks by miner
 func GetBlocksByMiner(ctx context.Context, client *ethclient.Client, miner string, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Block, error) {
 	mineraddr := common.HexToAddress(miner)
 	blocks := []*types.Block{}
-	var one = big.NewInt(1)
+	one := big.NewInt(1)
 	for i := new(big.Int).Set(startBlockNumber); i.Cmp(endBlockNumber) <= 0; i.Add(i, one) {
 		block, err := GetBlockByNumber(ctx, client, i)
 		if err != nil {
