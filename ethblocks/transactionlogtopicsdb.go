@@ -11,8 +11,8 @@ import (
 
 // TransactionLogTopicIntf interface
 type TransactionLogTopicIntf interface {
-	AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error)
-	GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error)
+	AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, blockId uint, transactionId uint, transactionReceiptId uint, TransactionLogId uint) (*TransactionLogTopic, error)
+	GetTransactionLogTopics(ctx context.Context, transactionLogId uint) ([]*TransactionLogTopic, error)
 }
 
 // TransactionLogTopicService - For accessing Transaction Log Topic services
@@ -29,16 +29,16 @@ func NewTransactionLogTopicService(db *sql.DB) *TransactionLogTopicService {
 
 // TransactionLogTopic - Used for
 type TransactionLogTopic struct {
-	ID                   uint
+	Id                   uint
 	Topic                string
-	BlockID              uint
-	TransactionID        uint
-	TransactionReceiptID uint
-	TransactionLogID     uint
+	BlockId              uint
+	TransactionId        uint
+	TransactionReceiptId uint
+	TransactionLogId     uint
 }
 
 // AddTransactionLogTopic - add a transaction Topic to the db
-func (t *TransactionLogTopicService) AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, BlockID uint, TransactionID uint, TransactionReceiptID uint, TransactionLogID uint) (*TransactionLogTopic, error) {
+func (t *TransactionLogTopicService) AddTransactionLogTopic(ctx context.Context, tx *sql.Tx, s common.Hash, blockId uint, transactionId uint, transactionReceiptId uint, transactionLogId uint) (*TransactionLogTopic, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -46,10 +46,10 @@ func (t *TransactionLogTopicService) AddTransactionLogTopic(ctx context.Context,
 	default:
 		transLogTopic := TransactionLogTopic{}
 		transLogTopic.Topic = s.Hex()
-		transLogTopic.BlockID = BlockID
-		transLogTopic.TransactionID = TransactionID
-		transLogTopic.TransactionReceiptID = TransactionReceiptID
-		transLogTopic.TransactionLogID = TransactionLogID
+		transLogTopic.BlockId = blockId
+		transLogTopic.TransactionId = transactionId
+		transLogTopic.TransactionReceiptId = transactionReceiptId
+		transLogTopic.TransactionLogId = transactionLogId
 		err := insertTransactionLogTopic(ctx, tx, &transLogTopic)
 		if err != nil {
 			log.Println(err)
@@ -80,22 +80,22 @@ func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, transLogTopic *T
 		}
 		res, err := stmt.ExecContext(ctx,
 			transLogTopic.Topic,
-			transLogTopic.BlockID,
-			transLogTopic.TransactionID,
-			transLogTopic.TransactionReceiptID,
-			transLogTopic.TransactionLogID)
+			transLogTopic.BlockId,
+			transLogTopic.TransactionId,
+			transLogTopic.TransactionReceiptId,
+			transLogTopic.TransactionLogId)
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
 			return err
 		}
-		uID, err := res.LastInsertId()
+		uId, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
 			return err
 		}
-		transLogTopic.ID = uint(uID)
+		transLogTopic.Id = uint(uId)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
@@ -105,8 +105,8 @@ func insertTransactionLogTopic(ctx context.Context, tx *sql.Tx, transLogTopic *T
 	}
 }
 
-// GetTransactionLogTopics - used for getting topics by TransactionLogID
-func (t *TransactionLogTopicService) GetTransactionLogTopics(ctx context.Context, TransactionLogID uint) ([]*TransactionLogTopic, error) {
+// GetTransactionLogTopics - used for getting topics by TransactionLogId
+func (t *TransactionLogTopicService) GetTransactionLogTopics(ctx context.Context, transactionLogId uint) ([]*TransactionLogTopic, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -119,7 +119,7 @@ func (t *TransactionLogTopicService) GetTransactionLogTopics(ctx context.Context
 			block_id,
 			transaction_id,
 			transaction_receipt_id,
-      transaction_log_id from transaction_log_topics where transaction_log_id = ?`, TransactionLogID)
+      transaction_log_id from transaction_log_topics where transaction_log_id = ?`, transactionLogId)
 		if err != nil {
 			log.Println(err)
 			return nil, err
@@ -128,12 +128,12 @@ func (t *TransactionLogTopicService) GetTransactionLogTopics(ctx context.Context
 		for rows.Next() {
 			transLogTopic := TransactionLogTopic{}
 			err = rows.Scan(
-				&transLogTopic.ID,
+				&transLogTopic.Id,
 				&transLogTopic.Topic,
-				&transLogTopic.BlockID,
-				&transLogTopic.TransactionID,
-				&transLogTopic.TransactionReceiptID,
-				&transLogTopic.TransactionLogID)
+				&transLogTopic.BlockId,
+				&transLogTopic.TransactionId,
+				&transLogTopic.TransactionReceiptId,
+				&transLogTopic.TransactionLogId)
 			if err != nil {
 				log.Println(err)
 				return nil, err

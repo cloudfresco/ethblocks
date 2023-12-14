@@ -17,7 +17,7 @@ We use the latest version of Go.
 Import the library:
 
 ```go
-import "github.com/cloudfresco/ethblocks"
+import "github.com/cloudfresco/ethblocks/ethblocks"
 ```
 
 Then call any of the functions.  See [examples](https://github.com/cloudfresco/ethblocks/tree/master/examples).

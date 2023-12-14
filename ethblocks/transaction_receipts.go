@@ -20,8 +20,9 @@ func PrintReceipt(receipt *types.Receipt) {
 	log.Println("GasUsed: ", receipt.GasUsed)
 }
 
-// GetTransactionReceipt - Get Transaction Receipt
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionreceipt
+// GetTransactionReceipt - Returns the receipt of a transaction by
+// transaction hash
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactionreceiptt
 func GetTransactionReceipt(ctx context.Context, client *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
 	receipt, err := client.TransactionReceipt(ctx, txHash)
 	if err != nil {

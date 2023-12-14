@@ -5,7 +5,7 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/cloudfresco/ethblocks"
+	"github.com/cloudfresco/ethblocks/ethblocks"
 	_ "github.com/go-sql-driver/mysql"
 )
 

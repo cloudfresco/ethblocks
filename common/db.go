@@ -1,4 +1,4 @@
-package ethblocks
+package common
 
 import (
 	"database/sql"

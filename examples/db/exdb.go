@@ -7,7 +7,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/cloudfresco/ethblocks"
+	etbcommon "github.com/cloudfresco/ethblocks/common"
+	"github.com/cloudfresco/ethblocks/ethblocks"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -20,13 +21,12 @@ func main() {
 	ctx := context.Background()
 
 	blockNumber := big.NewInt(7602500)
-	// log.Println("GetBlockByNumber")
 	block, err := ethblocks.GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// create connection
-	appState, err := ethblocks.DbInit()
+	appState, err := etbcommon.DbInit()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	blk2, err := blockService.GetBlock(ctx, blk1.ID)
+	blk2, err := blockService.GetBlock(ctx, blk1.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = ethblocks.DbClose(appState.Db)
+	err = etbcommon.DbClose(appState.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,9 +74,9 @@ func compareBlock(ctx context.Context, blk1 *ethblocks.Block, blk2 *ethblocks.Bl
 }
 
 // compareBlockUncles - Compare Block Uncles
-func compareBlockUncles(ctx context.Context, appState *ethblocks.AppState, blk1 *ethblocks.Block) error {
+func compareBlockUncles(ctx context.Context, appState *etbcommon.AppState, blk1 *ethblocks.Block) error {
 	blockUncleService := ethblocks.NewBlockUncleService(appState.Db)
-	uncles, err := blockUncleService.GetBlockUncles(ctx, blk1.ID)
+	uncles, err := blockUncleService.GetBlockUncles(ctx, blk1.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,9 +87,9 @@ func compareBlockUncles(ctx context.Context, appState *ethblocks.AppState, blk1 
 }
 
 // compareBlockTransactions - Compare Block Transactions
-func compareBlockTransactions(ctx context.Context, appState *ethblocks.AppState, blk1 *ethblocks.Block) error {
+func compareBlockTransactions(ctx context.Context, appState *etbcommon.AppState, blk1 *ethblocks.Block) error {
 	transactionService := ethblocks.NewTransactionService(appState.Db)
-	transactions, err := transactionService.GetBlockTransactions(ctx, blk1.ID)
+	transactions, err := transactionService.GetBlockTransactions(ctx, blk1.Id)
 	if err != nil {
 		log.Fatal(err)
 		return err
@@ -101,10 +101,10 @@ func compareBlockTransactions(ctx context.Context, appState *ethblocks.AppState,
 }
 
 // compareReceiptsLogTopics - Compare Receipts Log Topics
-func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState, blk1 *ethblocks.Block) error {
+func compareReceiptsLogTopics(ctx context.Context, appState *etbcommon.AppState, blk1 *ethblocks.Block) error {
 	for _, trans := range blk1.Transactions {
 		transactionReceiptService := ethblocks.NewTransactionReceiptService(appState.Db)
-		receipts, err := transactionReceiptService.GetTransactionReceipts(ctx, trans.ID)
+		receipts, err := transactionReceiptService.GetTransactionReceipts(ctx, trans.Id)
 		if err != nil {
 			log.Fatal(err)
 			return err
@@ -114,7 +114,7 @@ func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState,
 		}
 		for _, receipt := range trans.TransactionReceipts {
 			transactionLogService := ethblocks.NewTransactionLogService(appState.Db)
-			logs, err := transactionLogService.GetTransactionLogs(ctx, receipt.ID)
+			logs, err := transactionLogService.GetTransactionLogs(ctx, receipt.Id)
 			if err != nil {
 				log.Fatal(err)
 				return err
@@ -125,7 +125,7 @@ func compareReceiptsLogTopics(ctx context.Context, appState *ethblocks.AppState,
 
 			for _, lg := range receipt.Logs {
 				transactionLogTopicService := ethblocks.NewTransactionLogTopicService(appState.Db)
-				topics, err := transactionLogTopicService.GetTransactionLogTopics(ctx, lg.ID)
+				topics, err := transactionLogTopicService.GetTransactionLogTopics(ctx, lg.Id)
 				if err != nil {
 					log.Fatal(err)
 					return err

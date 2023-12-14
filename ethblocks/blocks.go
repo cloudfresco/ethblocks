@@ -59,17 +59,8 @@ func GetBlockByNumber(ctx context.Context, client *ethclient.Client, blockNumber
 	return block, nil
 }
 
-// GetBlockByHash - Get block by block hash
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbyhash
-func GetBlockByHash(ctx context.Context, client *ethclient.Client, hash common.Hash) (*types.Block, error) {
-	block, err := client.BlockByHash(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-	return block, nil
-}
-
-// BlockNumber - Get the latest block number
+// BlockNumber - returns the number of most recent block
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_blocknumber
 func BlockNumber(ctx context.Context, client *ethclient.Client) (string, error) {
 	header, err := client.HeaderByNumber(ctx, nil)
 	if err != nil {
@@ -78,7 +69,17 @@ func BlockNumber(ctx context.Context, client *ethclient.Client) (string, error) 
 	return header.Number.String(), nil
 }
 
-// GetBlocks - Get blocks between start and end
+// GetBlockByHash - Returns information about a block by hash
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblockbyhash
+func GetBlockByHash(ctx context.Context, client *ethclient.Client, hash common.Hash) (*types.Block, error) {
+	block, err := client.BlockByHash(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
+}
+
+// GetBlocks - return blocks between start and end
 func GetBlocks(ctx context.Context, client *ethclient.Client, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Block, error) {
 	blocks := []*types.Block{}
 	one := big.NewInt(1)
@@ -92,15 +93,15 @@ func GetBlocks(ctx context.Context, client *ethclient.Client, startBlockNumber *
 	return blocks, nil
 }
 
-// GetUncles - Get Uncles by block
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblockbyhash
+// GetUncles - return the Uncles in the block
 func GetUncles(block *types.Block) []*types.Header {
 	blockuncles := block.Uncles()
 	return blockuncles
 }
 
-// GetUncleCountByBlockNumber - Get Uncle Count By Block Number
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclecountbyblocknumber
+// GetUncleCountByBlockNumber - Returns the number of uncles in a block
+// from a block matching the given block number.
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getunclecountbyblocknumber
 func GetUncleCountByBlockNumber(ctx context.Context, client *ethclient.Client, blockNumber *big.Int) (int, error) {
 	block, err := GetBlockByNumber(ctx, client, blockNumber)
 	if err != nil {
@@ -109,24 +110,15 @@ func GetUncleCountByBlockNumber(ctx context.Context, client *ethclient.Client, b
 	return len(block.Uncles()), err
 }
 
-// GetUncleCountByBlockHash - Get Uncle Count By Block Hash
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclecountbyblockhash
+// GetUncleCountByBlockHash - Returns the number of uncles in a block
+// from a block matching the given block number.
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getunclecountbyblocknumber
 func GetUncleCountByBlockHash(ctx context.Context, client *ethclient.Client, hash common.Hash) (int, error) {
 	block, err := GetBlockByHash(ctx, client, hash)
 	if err != nil {
 		return 0, err
 	}
 	return len(block.Uncles()), err
-}
-
-// GetUncleByBlockHashAndIndex - Get Uncle By Block Hash and Index
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclebyblockhashandindex
-func GetUncleByBlockHashAndIndex() {
-}
-
-// GetUncleByBlockNumberAndIndex - Get Uncle  By Block Number and Index
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getunclebyblocknumberandindex
-func GetUncleByBlockNumberAndIndex() {
 }
 
 // GetBlocksByMiner - Get blocks by miner

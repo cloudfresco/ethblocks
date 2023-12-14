@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -14,7 +15,7 @@ import (
 type BlockServiceIntf interface {
 	AddBlock(ctx context.Context, client *ethclient.Client, block *types.Block) (*Block, error)
 	CreateBlockTransaction(ctx context.Context, client *ethclient.Client, tx *sql.Tx, blk *Block, block *types.Block) error
-	GetBlock(ctx context.Context, ID uint) (*Block, error)
+	GetBlock(ctx context.Context, id uint) (*Block, error)
 }
 
 // BlockService - For accessing block services
@@ -31,23 +32,32 @@ func NewBlockService(db *sql.DB) *BlockService {
 
 // Block - Used for
 type Block struct {
-	ID           uint
-	BlockNumber  uint64
-	BlockTime    uint64
-	ParentHash   string
-	UncleHash    string
-	BlockRoot    string
-	TxHash       string
-	ReceiptHash  string
-	MixDigest    string
-	BlockNonce   uint64
-	Coinbase     string
-	GasLimit     uint64
-	GasUsed      uint64
-	Difficulty   uint64
-	BlockSize    uint64
-	BlockUncles  []*BlockUncle
-	Transactions []*Transaction
+	Id               uint
+	ParentHash       string
+	UncleHash        string
+	Coinbase         string
+	BlockRoot        string
+	TxHash           string
+	ReceiptHash      string
+	Bloom            []byte
+	Difficulty       uint64
+	BlockNumber      uint64
+	GasLimit         uint64
+	GasUsed          uint64
+	BlockTime        uint64
+	Extra            []byte
+	MixDigest        string
+	BlockNonce       uint64
+	BaseFee          uint64
+	WithdrawalsHash  string
+	BlobGasUsed      *uint64
+	ExcessBlobGas    *uint64
+	ParentBeaconRoot string
+	BlockHash        string
+	BlockSize        uint64
+	ReceivedAt       time.Time
+	BlockUncles      []*BlockUncle
+	Transactions     []*Transaction
 }
 
 // AddBlock - add a block to the db
@@ -58,20 +68,33 @@ func (b *BlockService) AddBlock(ctx context.Context, client *ethclient.Client, b
 		return nil, err
 	default:
 		blk := Block{}
-		blk.BlockNumber = block.Number().Uint64()
-		blk.BlockTime = block.Time()
 		blk.ParentHash = block.ParentHash().Hex()
 		blk.UncleHash = block.UncleHash().Hex()
+		blk.Coinbase = block.Coinbase().Hex()
 		blk.BlockRoot = block.Root().Hex()
 		blk.TxHash = block.TxHash().Hex()
 		blk.ReceiptHash = block.ReceiptHash().Hex()
-		blk.MixDigest = block.MixDigest().Hex()
-		blk.BlockNonce = block.Nonce()
-		blk.Coinbase = block.Coinbase().Hex()
+		blk.Bloom = block.Bloom().Bytes()
+		blk.Difficulty = block.Difficulty().Uint64()
+		blk.BlockNumber = block.Number().Uint64()
 		blk.GasLimit = block.GasLimit()
 		blk.GasUsed = block.GasUsed()
-		blk.Difficulty = block.Difficulty().Uint64()
+		blk.BlockTime = block.Time()
+		blk.Extra = block.Extra()
+		blk.MixDigest = block.MixDigest().Hex()
+		blk.BlockNonce = block.Nonce()
+		if block.BaseFee() != nil {
+			blk.BaseFee = block.BaseFee().Uint64()
+		}
+		blk.BlobGasUsed = block.BlobGasUsed()
+		blk.ExcessBlobGas = block.ExcessBlobGas()
+		if block.BeaconRoot() != nil {
+			blk.ParentBeaconRoot = block.BeaconRoot().Hex()
+		}
+		blk.BlockHash = block.Hash().Hex()
 		blk.BlockSize = block.Size()
+		blk.ReceivedAt = block.ReceivedAt
+
 		tx, err := b.Db.Begin()
 		if err != nil {
 			log.Println(err)
@@ -87,7 +110,7 @@ func (b *BlockService) AddBlock(ctx context.Context, client *ethclient.Client, b
 		uncles := []*BlockUncle{}
 		for _, blockuncle := range GetUncles(block) {
 			blockUncleService := BlockUncleService{Db: b.Db}
-			uncle, err := blockUncleService.AddBlockUncle(ctx, tx, blockuncle, blk.ID)
+			uncle, err := blockUncleService.AddBlockUncle(ctx, tx, blockuncle, blk.Id)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -122,7 +145,7 @@ func (b *BlockService) CreateBlockTransaction(ctx context.Context, client *ethcl
 		transactions := []*Transaction{}
 		for _, tns := range GetTransactions(block) {
 			transactionService := TransactionService{Db: b.Db}
-			transaction, err := transactionService.AddTransaction(ctx, tx, tns, blk.ID, blk.BlockNumber)
+			transaction, err := transactionService.AddTransaction(ctx, tx, tns, blk.Id, blk.BlockNumber)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -137,7 +160,7 @@ func (b *BlockService) CreateBlockTransaction(ctx context.Context, client *ethcl
 			}
 			receipts := []*TransactionReceipt{}
 			transactionReceiptService := TransactionReceiptService{Db: b.Db}
-			treceipt, err := transactionReceiptService.AddTransactionReceipt(ctx, tx, receipt, blk.ID, blk.BlockNumber, block.Hash().Hex(), transaction.ID)
+			treceipt, err := transactionReceiptService.AddTransactionReceipt(ctx, tx, receipt, blk.Id, blk.BlockNumber, block.Hash().Hex(), transaction.Id)
 			if err != nil {
 				log.Println(err)
 				err = tx.Rollback()
@@ -146,7 +169,7 @@ func (b *BlockService) CreateBlockTransaction(ctx context.Context, client *ethcl
 			tlogs := []*TransactionLog{}
 			for _, lg := range GetLogs(receipt) {
 				transactionLogService := TransactionLogService{Db: b.Db}
-				tlg, err := transactionLogService.AddTransactionLog(ctx, tx, lg, blk.ID, transaction.ID, treceipt.ID)
+				tlg, err := transactionLogService.AddTransactionLog(ctx, tx, lg, blk.Id, transaction.Id, treceipt.Id)
 				if err != nil {
 					log.Println(err)
 					err = tx.Rollback()
@@ -155,7 +178,7 @@ func (b *BlockService) CreateBlockTransaction(ctx context.Context, client *ethcl
 				topics := []*TransactionLogTopic{}
 				for _, tpc := range GetTopics(lg) {
 					transactionLogTopicService := TransactionLogTopicService{Db: b.Db}
-					topic, err := transactionLogTopicService.AddTransactionLogTopic(ctx, tx, tpc, blk.ID, transaction.ID, treceipt.ID, tlg.ID)
+					topic, err := transactionLogTopicService.AddTransactionLogTopic(ctx, tx, tpc, blk.Id, transaction.Id, treceipt.Id, tlg.Id)
 					if err != nil {
 						log.Println(err)
 						err = tx.Rollback()
@@ -185,53 +208,72 @@ func insertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error {
 	default:
 		stmt, err := tx.PrepareContext(ctx, `insert into blocks
 	  ( 
-			block_number,
-			block_time,
 			parent_hash,
-			uncle_hash,
-			block_root,
-			tx_hash,
-			receipt_hash,
-			mix_digest,
-			block_nonce,
-			coinbase,
-			gas_limit,
-			gas_used,
-			difficulty,
-			block_size)
+      uncle_hash,
+      coinbase,
+      block_root,
+      tx_hash,
+      receipt_hash,
+      bloom,
+      difficulty,
+      block_number,
+      gas_limit,
+      gas_used,
+      block_time,
+      extra,
+      mix_digest,
+      block_nonce,
+      base_fee,
+      withdrawals_hash,
+      blob_gas_used,
+      excess_blob_gas,
+      parent_beacon_root,
+      block_hash,
+      block_size,
+      received_at)
   values (?,?,?,?,?,?,?,?,?,?,
-          ?,?,?,?);`)
+          ?,?,?,?,?,?,?,?,?,?,
+          ?,?,?);`)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 		res, err := stmt.ExecContext(ctx,
-			blk.BlockNumber,
-			blk.BlockTime,
 			blk.ParentHash,
 			blk.UncleHash,
+			blk.Coinbase,
 			blk.BlockRoot,
 			blk.TxHash,
 			blk.ReceiptHash,
-			blk.MixDigest,
-			blk.BlockNonce,
-			blk.Coinbase,
+			blk.Bloom,
+			blk.Difficulty,
+			blk.BlockNumber,
 			blk.GasLimit,
 			blk.GasUsed,
-			blk.Difficulty,
-			blk.BlockSize)
+			blk.BlockTime,
+			blk.Extra,
+			blk.MixDigest,
+			blk.BlockNonce,
+			blk.BaseFee,
+			blk.WithdrawalsHash,
+			blk.BlobGasUsed,
+			blk.ExcessBlobGas,
+			blk.ParentBeaconRoot,
+			blk.BlockHash,
+			blk.BlockSize,
+			blk.ReceivedAt)
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
 			return err
 		}
-		uID, err := res.LastInsertId()
+		uId, err := res.LastInsertId()
 		if err != nil {
 			log.Println(err)
 			err = stmt.Close()
 			return err
 		}
-		blk.ID = uint(uID)
+		blk.Id = uint(uId)
 		err = stmt.Close()
 		if err != nil {
 			log.Println(err)
@@ -242,7 +284,7 @@ func insertBlock(ctx context.Context, tx *sql.Tx, blk *Block) error {
 }
 
 // GetBlock - used for
-func (b *BlockService) GetBlock(ctx context.Context, ID uint) (*Block, error) {
+func (b *BlockService) GetBlock(ctx context.Context, id uint) (*Block, error) {
 	select {
 	case <-ctx.Done():
 		err := errors.New("Client closed connection")
@@ -251,49 +293,67 @@ func (b *BlockService) GetBlock(ctx context.Context, ID uint) (*Block, error) {
 		blk := Block{}
 		row := b.Db.QueryRowContext(ctx, `select
       id,
-			block_number,
-			block_time,
 			parent_hash,
-			uncle_hash,
-			block_root,
-			tx_hash,
-			receipt_hash,
-			mix_digest,
-			block_nonce,
-			coinbase,
-			gas_limit,
-			gas_used,
-			difficulty,
-			block_size from blocks where id = ?;`, ID)
+      uncle_hash,
+      coinbase,
+      block_root,
+      tx_hash,
+      receipt_hash,
+      bloom,
+      difficulty,
+      block_number,
+      gas_limit,
+      gas_used,
+      block_time,
+      extra,
+      mix_digest,
+      block_nonce,
+      base_fee,
+      withdrawals_hash,
+      blob_gas_used,
+      excess_blob_gas,
+      parent_beacon_root,
+      block_hash,
+      block_size,
+      received_at from blocks where id = ?;`, id)
 
 		err := row.Scan(
-			&blk.ID,
-			&blk.BlockNumber,
-			&blk.BlockTime,
+			&blk.Id,
 			&blk.ParentHash,
 			&blk.UncleHash,
+			&blk.Coinbase,
 			&blk.BlockRoot,
 			&blk.TxHash,
 			&blk.ReceiptHash,
-			&blk.MixDigest,
-			&blk.BlockNonce,
-			&blk.Coinbase,
+			&blk.Bloom,
+			&blk.Difficulty,
+			&blk.BlockNumber,
 			&blk.GasLimit,
 			&blk.GasUsed,
-			&blk.Difficulty,
-			&blk.BlockSize)
+			&blk.BlockTime,
+			&blk.Extra,
+			&blk.MixDigest,
+			&blk.BlockNonce,
+			&blk.BaseFee,
+			&blk.WithdrawalsHash,
+			&blk.BlobGasUsed,
+			&blk.ExcessBlobGas,
+			&blk.ParentBeaconRoot,
+			&blk.BlockHash,
+			&blk.BlockSize,
+			&blk.ReceivedAt)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
 		blockUncleService := BlockUncleService{Db: b.Db}
-		uncles, err := blockUncleService.GetBlockUncles(ctx, ID)
+		uncles, err := blockUncleService.GetBlockUncles(ctx, id)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
 		transactionsService := TransactionService{Db: b.Db}
-		transactions, err := transactionsService.GetBlockTransactions(ctx, ID)
+		transactions, err := transactionsService.GetBlockTransactions(ctx, id)
 		if err != nil {
 			log.Println(err)
 			return nil, err

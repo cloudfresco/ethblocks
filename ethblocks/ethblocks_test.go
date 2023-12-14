@@ -4,16 +4,19 @@ import (
 	"log"
 	"os"
 	"testing"
+
+	etbcommon "github.com/cloudfresco/ethblocks/common"
+	"github.com/cloudfresco/ethblocks/test"
 )
 
 var (
-	appState   *AppState
+	appState   *etbcommon.AppState
 	clientAddr string
 )
 
 func TestMain(m *testing.M) {
 	var err error
-	appState, err = DbInitTest()
+	appState, err = test.DbInitTest()
 	if err != nil {
 		log.Fatal(err)
 	}

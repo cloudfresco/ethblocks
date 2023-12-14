@@ -34,14 +34,15 @@ func getSender(tx *types.Transaction) string {
 	return from.Hex()
 }
 
-// GetTransactions - Get Transaction by block
+// GetTransactions - return the Transactions in this block
 func GetTransactions(block *types.Block) []*types.Transaction {
 	transactions := block.Transactions()
 	return transactions
 }
 
-// GetBlockTransactionCountByNumber - Get Block Transaction Count By Number
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblocktransactioncountbynumber
+// GetBlockTransactionCountByNumber - Returns the number of transactions
+// in a block matching the given block number.
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblocktransactioncountbynumber
 func GetBlockTransactionCountByNumber(ctx context.Context, client *ethclient.Client) (uint, error) {
 	count, err := client.PendingTransactionCount(ctx)
 	if err != nil {
@@ -50,8 +51,9 @@ func GetBlockTransactionCountByNumber(ctx context.Context, client *ethclient.Cli
 	return count, nil
 }
 
-// GetBlockTransactionCountByHash - Get Block Transaction Count By Hash
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblocktransactioncountbyhash
+// GetBlockTransactionCountByHash - Returns the number of transactions in
+// a block from a block matching the given block hash.
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblocktransactioncountbyhash
 func GetBlockTransactionCountByHash(ctx context.Context, client *ethclient.Client, blockHash common.Hash) (uint, error) {
 	count, err := client.TransactionCount(ctx, blockHash)
 	if err != nil {
@@ -60,8 +62,9 @@ func GetBlockTransactionCountByHash(ctx context.Context, client *ethclient.Clien
 	return count, nil
 }
 
-// GetTransactionByHash - Get Transaction By Hash
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionbyhash
+// GetTransactionByHash - Returns the information about a transaction
+// requested by transaction hash.
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactionbyhash
 func GetTransactionByHash(ctx context.Context, client *ethclient.Client, hash common.Hash) (*types.Transaction, bool, error) {
 	tx, isPending, err := client.TransactionByHash(ctx, hash)
 	if err != nil {
@@ -70,8 +73,9 @@ func GetTransactionByHash(ctx context.Context, client *ethclient.Client, hash co
 	return tx, isPending, nil
 }
 
-// GetTransactionByBlockHashAndIndex - Get Transaction By BlockHash And Index
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionbyblockhashandindex
+// GetTransactionByBlockHashAndIndex - Returns information about a
+// transaction by block hash and transaction index position.
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactionbyblockhashandindex
 func GetTransactionByBlockHashAndIndex(ctx context.Context, client *ethclient.Client, hash common.Hash, index uint) (*types.Transaction, error) {
 	tx, err := client.TransactionInBlock(ctx, hash, index)
 	if err != nil {
@@ -80,12 +84,7 @@ func GetTransactionByBlockHashAndIndex(ctx context.Context, client *ethclient.Cl
 	return tx, nil
 }
 
-// GetTransactionByBlockNumberAndIndex - Get Transaction By BlockNumber And Index
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionbyblocknumberandindex
-func GetTransactionByBlockNumberAndIndex() {
-}
-
-// GetTransactionsByAddress - Get Transactions By Address
+// GetTransactionsByAddress - returns the transactions in a range of blocks
 func GetTransactionsByAddress(ctx context.Context, client *ethclient.Client, frmaddr string, startBlockNumber *big.Int, endBlockNumber *big.Int) ([]*types.Transaction, error) {
 	frmaddress := common.HexToHash(frmaddr)
 	txs := []*types.Transaction{}
@@ -112,15 +111,15 @@ func CreateRawTransaction(nonce uint64, toAddress common.Address, amount *big.In
 	return tx
 }
 
-// SendRawTransaction - Send Raw Transaction
-// https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sendrawtransaction
+// SendRawTransaction - Send a signed Transaction
+// https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_sendrawtransaction
 func SendRawTransaction(ctx context.Context, client *ethclient.Client, tx *types.Transaction, prv *ecdsa.PrivateKey) error {
-	chainID, err := client.NetworkID(ctx)
+	chainId, err := client.NetworkID(ctx)
 	if err != nil {
 		return err
 	}
 
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), prv)
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainId), prv)
 	if err != nil {
 		return err
 	}
