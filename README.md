@@ -1,6 +1,3 @@
-[![Build Status](https://travis-ci.org/cloudfresco/ethblocks.svg?branch=master)](https://travis-ci.org/cloudfresco/ethblocks) [![Go Report Card](https://goreportcard.com/badge/github.com/cloudfresco/ethblocks)](https://goreportcard.com/report/github.com/cloudfresco/ethblocks)
-
-
 # Ethblocks -- Analyze Ethereum Blocks
 
 ## Features
