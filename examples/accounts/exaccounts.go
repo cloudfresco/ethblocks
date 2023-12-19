@@ -8,7 +8,6 @@ import (
 	"github.com/cloudfresco/ethblocks/ethblocks"
 	"github.com/ethereum/go-ethereum/common"
 	_ "github.com/go-sql-driver/mysql"
-	//"github.com/ethereum/go-ethereum/crypto"
 )
 
 func main() {
@@ -32,7 +31,6 @@ func ExAccount() {
 	ctx := context.Background()
 	account := "0x7AF3A1f8F9864F8E8B6A465F4eaeFa15321029f4"
 	blockNumber := big.NewInt(7602500)
-	// testKey, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	testSlot := common.HexToHash("0xdeadbeef")
 
 	balance, err := ethblocks.GetBalance(ctx, client, account)

@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 )
 
 // PrintTransaction - Print Transaction
@@ -38,6 +39,15 @@ func getSender(tx *types.Transaction) string {
 func GetTransactions(block *types.Block) []*types.Transaction {
 	transactions := block.Transactions()
 	return transactions
+}
+
+// TransactionInBlock - return transaction in block
+func TransactionInBlock(ctx context.Context, client *ethclient.Client, blockHash common.Hash, index uint) (*types.Transaction, error) {
+	tx, err := client.TransactionInBlock(ctx, blockHash, index)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
 }
 
 // GetBlockTransactionCountByNumber - Returns the number of transactions
@@ -124,6 +134,69 @@ func SendRawTransaction(ctx context.Context, client *ethclient.Client, tx *types
 		return err
 	}
 	err = client.SendTransaction(ctx, signedTx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SendTransaction1 -- create and send a transaction
+func SendTransaction1(client *ethclient.Client, fromAddr common.Address, toAddress *common.Address, privateKey *ecdsa.PrivateKey, value *big.Int, gas uint64, gasPrice *big.Int) error {
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddr)
+	if err != nil {
+		return err
+	}
+
+	return SendTransaction2(client, nonce, toAddress, privateKey, value, gas, gasPrice)
+}
+
+// SendTransaction2 -- create and send a transaction
+func SendTransaction2(client *ethclient.Client, nonce uint64, toAddress *common.Address, privateKey *ecdsa.PrivateKey, value *big.Int, gas uint64, gasPrice *big.Int) error {
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return err
+	}
+
+	signer := types.LatestSignerForChainID(chainID)
+	tx, err := types.SignNewTx(privateKey, signer, &types.LegacyTx{
+		Nonce:    nonce,
+		To:       toAddress,
+		Value:    value,
+		Gas:      gas,
+		GasPrice: gasPrice,
+	})
+	if err != nil {
+		return err
+	}
+	return client.SendTransaction(context.Background(), tx)
+}
+
+// SubscribePendingTransactions - Subscribe to Transactions
+func SubscribePendingTransactions(ctx context.Context, client *ethclient.Client, gclient *gethclient.Client, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, testKey *ecdsa.PrivateKey) error {
+	// Subscribe to Transactions
+	ch := make(chan common.Hash)
+	_, err := gclient.SubscribePendingTransactions(ctx, ch)
+	if err != nil {
+		return err
+	}
+	// send transaction
+	err = SendTransaction2(client, nonce, to, testKey, amount, gasLimit, gasPrice)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SubscribeFullPendingTransactions - subscribe full pending transactions
+func SubscribeFullPendingTransactions(ctx context.Context, client *ethclient.Client, gclient *gethclient.Client, nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, testKey *ecdsa.PrivateKey) error {
+	// Subscribe to Transactions
+	ch := make(chan *types.Transaction)
+	_, err := gclient.SubscribeFullPendingTransactions(ctx, ch)
+	if err != nil {
+		return err
+	}
+	err = SendTransaction2(client, nonce, to, testKey, amount, gasLimit, gasPrice)
 	if err != nil {
 		return err
 	}
