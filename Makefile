@@ -19,8 +19,9 @@ rev: revive
 lint: golangcilint
  
 build: 
-	@echo "Building ethblocks"	
+	@echo "Building ethblocks"
 	@go build ./...
+	@go build -o bin/etbcli main.go 	
 
 test:
 

@@ -5,6 +5,7 @@ go 1.21.1
 require (
 	github.com/ethereum/go-ethereum v1.13.5
 	github.com/go-sql-driver/mysql v1.7.1
+	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 )
@@ -29,6 +30,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

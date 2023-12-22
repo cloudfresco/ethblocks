@@ -12,3 +12,5 @@
 *.out
 
 ethblocks.sh
+.env
+bin/etbcli
