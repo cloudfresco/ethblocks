@@ -41,7 +41,7 @@ func GetTransactions(block *types.Block) []*types.Transaction {
 	return transactions
 }
 
-// TransactionInBlock - return transaction in block
+// TransactionInBlock - return a single transaction at index in the given block
 func TransactionInBlock(ctx context.Context, client *ethclient.Client, blockHash common.Hash, index uint) (*types.Transaction, error) {
 	tx, err := client.TransactionInBlock(ctx, blockHash, index)
 	if err != nil {
@@ -50,8 +50,7 @@ func TransactionInBlock(ctx context.Context, client *ethclient.Client, blockHash
 	return tx, nil
 }
 
-// GetBlockTransactionCountByNumber - Returns the number of transactions
-// in a block matching the given block number.
+// GetBlockTransactionCountByNumber - returns the total number of transactions in the pending state.
 // https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblocktransactioncountbynumber
 func GetBlockTransactionCountByNumber(ctx context.Context, client *ethclient.Client) (uint, error) {
 	count, err := client.PendingTransactionCount(ctx)
