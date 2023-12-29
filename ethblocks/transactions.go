@@ -14,14 +14,23 @@ import (
 
 // PrintTransaction - Print Transaction
 func PrintTransaction(tx *types.Transaction) {
-	log.Println("hash            : ", tx.Hash().Hex())
+	txv, txr, txs := tx.RawSignatureValues()
+	log.Println("From            : ", getSender(tx))
+	log.Println("To              : ", tx.To().Hex())
 	log.Println("AccountNonce    : ", tx.Nonce())
-	log.Println("Price           : ", tx.GasPrice().Uint64())
-	log.Println("GasLimit        : ", tx.Gas())
-	log.Println("TxAmount        : ", tx.Value().Uint64())
-	log.Println("from            : ", getSender(tx))
-	log.Println("to              : ", tx.To().Hex())
+	log.Println("Hash            : ", tx.Hash().Hex())
 	log.Println("Size            : ", tx.Size())
+	log.Println("TxAmount        : ", tx.Value().Uint64())
+	log.Println("TxType          : ", tx.Type())
+	log.Println("ChainId         : ", tx.ChainId().Uint64())
+	log.Println("GasLimit        : ", tx.Gas())
+	log.Println("GasPrice        : ", tx.GasPrice().Uint64())
+	log.Println("GasTipCap       : ", tx.GasTipCap().Uint64())
+	log.Println("GasFeeCap       : ", tx.GasFeeCap().Uint64())
+	log.Println("TxV             : ", txv.Uint64())
+	log.Println("TxR             : ", txr.Uint64())
+	log.Println("TxS             : ", txs.Uint64())
+	log.Println("Data            : ", tx.Data())
 }
 
 // getSender - Get sender details
