@@ -31,6 +31,10 @@ func PrintTransaction(tx *types.Transaction) {
 	log.Println("TxR             : ", txr.Uint64())
 	log.Println("TxS             : ", txs.Uint64())
 	log.Println("Data            : ", tx.Data())
+	log.Println("BlobGas         : ", tx.BlobGas())
+	log.Println("BlobFeeCap      : ", tx.BlobGasFeeCap())
+	log.Println("BlobHashes      : ", tx.BlobHashes())
+	log.Println("AccessList      : ", tx.AccessList())
 }
 
 // getSender - Get sender details
