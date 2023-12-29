@@ -12,41 +12,65 @@ import (
 
 // PrintBlock - Print block
 func PrintBlock(block *types.Block) {
-	log.Println("Number:", block.Number().Uint64())
-	log.Println(" Hash            : ", block.Hash().Hex())
-	log.Println(" ParentHash      : ", block.ParentHash().Hex())
-	log.Println(" Nonce           : ", block.Nonce())
-	log.Println(" Sha3Uncles      : ", block.UncleHash().Hex())
-	log.Println(" LogsBloom       : ", block.Bloom())
-	log.Println(" StateRoot       : ", block.Root().Hex())
-	log.Println(" TransactionsRoot: ", block.TxHash().Hex())
-	log.Println(" Miner           : ", block.Coinbase().Hex())
-	log.Println(" Difficulty      : ", block.Difficulty().Uint64())
-	log.Println(" ExtraData       : ", block.Extra())
-	log.Println(" Size           : ", block.Size())
-	log.Println(" GasLimit        : ", block.GasLimit())
-	log.Println(" GasUsed         : ", block.GasUsed())
-	log.Println(" Timestamp       : ", block.Time())
-	log.Println(" Transactions    : ", block.Transactions())
-	log.Println(" Length of transactions    : ", len(block.Transactions()))
-	log.Println(" Uncles          : ", block.Uncles())
+	PrintBlockHeader(block.Header())
+	PrintBlockUncles(block.Uncles())
+	PrintBlockTransactions(block.Transactions())
 }
 
-// PrintBlockUncle - Print block Uncle
+// PrintBlockHeader - Print a single block Header
+func PrintBlockHeader(header *types.Header) {
+	log.Println(" Number          : ", header.Number.Uint64())
+	log.Println(" ParentHash      : ", header.ParentHash.Hex())
+	log.Println(" Sha3Uncles      : ", header.UncleHash.Hex())
+	log.Println(" Hash            : ", header.Hash().Hex())
+	log.Println(" Miner           : ", header.Coinbase.Hex())
+	log.Println(" StateRoot       : ", header.Root.Hex())
+	log.Println(" TransactionsRoot: ", header.TxHash.Hex())
+	log.Println(" ReceiptsRoot    : ", header.ReceiptHash.Hex())
+	log.Println(" LogsBloom       : ", header.Bloom)
+	log.Println(" Difficulty      : ", header.Difficulty.Uint64())
+	log.Println(" GasLimit        : ", header.GasLimit)
+	log.Println(" GasUsed         : ", header.GasUsed)
+	log.Println(" Timestamp       : ", header.Time)
+	log.Println(" ExtraData       : ", header.Extra)
+	log.Println(" MixHash         : ", header.MixDigest)
+	log.Println(" Nonce           : ", header.Nonce)
+	log.Println(" Size            : ", header.Size())
+}
+
+// PrintBlockUncles - Loop over the uncles and print each one
+func PrintBlockUncles(uncles []*types.Header) {
+	for _, uncle := range uncles {
+		PrintBlockUncle(uncle)
+	}
+}
+
+// PrintBlockUncle - Print a single block Uncle
 func PrintBlockUncle(uncle *types.Header) {
-	log.Println("Number:", uncle.Number.Uint64())
+	log.Println(" Number          : ", uncle.Number.Uint64())
 	log.Println(" ParentHash      : ", uncle.ParentHash.Hex())
-	log.Println(" Nonce           : ", uncle.Nonce.Uint64())
 	log.Println(" Sha3Uncles      : ", uncle.UncleHash.Hex())
-	log.Println(" LogsBloom       : ", uncle.Bloom)
+	log.Println(" Hash            : ", uncle.Hash().Hex())
+	log.Println(" Miner           : ", uncle.Coinbase.Hex())
 	log.Println(" StateRoot       : ", uncle.Root.Hex())
 	log.Println(" TransactionsRoot: ", uncle.TxHash.Hex())
-	log.Println(" Miner           : ", uncle.Coinbase.Hex())
+	log.Println(" ReceiptsRoot    : ", uncle.ReceiptHash.Hex())
+	log.Println(" LogsBloom       : ", uncle.Bloom)
 	log.Println(" Difficulty      : ", uncle.Difficulty.Uint64())
-	log.Println(" Size           : ", uncle.Size())
 	log.Println(" GasLimit        : ", uncle.GasLimit)
 	log.Println(" GasUsed         : ", uncle.GasUsed)
 	log.Println(" Timestamp       : ", uncle.Time)
+	log.Println(" ExtraData       : ", uncle.Extra)
+	log.Println(" MixHash         : ", uncle.MixDigest)
+	log.Println(" Nonce           : ", uncle.Nonce)
+	log.Println(" Size            : ", uncle.Size())
+}
+
+// PrintBlockTransactions Loop over the transactions and print each one
+func PrintBlockTransactions(blocktransactions []*types.Transaction) {
+	for _, blocktransaction := range blocktransactions {
+		PrintTransaction(blocktransaction)
+	}
 }
 
 // GetBlockByNumber - Get block by block number
