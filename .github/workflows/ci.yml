@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ethblocks_test
+          MYSQL_USER: ethblocks_test
+          MYSQL_PASSWORD: ethblocks_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      ETHBLOCKS_DB: mysql
+      ETHBLOCKS_DBPASSROOT: root
+      ETHBLOCKS_DBUSER_TEST: ethblocks_test
+      ETHBLOCKS_DBPASS_TEST: ethblocks_test
+      ETHBLOCKS_DBHOST: 127.0.0.1
+      ETHBLOCKS_DBPORT: 3306
+      ETHBLOCKS_DBNAME_TEST: ethblocks_test
+      ETHBLOCKS_CLIENT: https://ethereum-rpc.publicnode.com
+      GOLANGCI_LINT_VERSION: v2.12.2
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify modules
+        run: make mod-verify
+
+      - name: Check formatting
+        run: make fmt-check
+
+      - name: Lint
+        run: make lint
+
+      - name: Vet
+        run: make vet
+
+      - name: Vulnerability scan
+        run: make vuln
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make build
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.out
+          if-no-files-found: ignore
