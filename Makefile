@@ -16,6 +16,12 @@ GO_TEST_FLAGS ?= -count=1 -race -shuffle=on
 GO_TEST_COVER_FLAGS ?= -covermode=atomic -coverprofile=$(COVERAGE_FILE)
 GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 MYSQL_ROOT_AUTH := $(if $(ETHBLOCKS_DBPASSROOT),-p$(ETHBLOCKS_DBPASSROOT),)
+# Connection target for the mysql client
+# Using an IP host (127.0.0.1) forces a TCP connection
+# A name host (localhost) enables using a native unix socket
+# CI sets these vars in the workflow's env block
+MYSQL_CONN := -h$(ETHBLOCKS_DBHOST) -P$(ETHBLOCKS_DBPORT)
+MYSQL_ROOT := mysql $(MYSQL_CONN) -uroot $(MYSQL_ROOT_AUTH)
 
 .PHONY: all ci verify build test test-env-check test-db-setup test-short coverage clean fmt fmt-check lint lint-fix lint-ci vet vuln mod-verify tidy pkgupd doc
 
@@ -41,12 +47,12 @@ test-env-check:
 	@test -n "$(ETHBLOCKS_CLIENT)" || (echo "ETHBLOCKS_CLIENT is required" && exit 1)
 
 test-db-setup: test-env-check
-	@mysql -uroot $(MYSQL_ROOT_AUTH) -e 'DROP DATABASE IF EXISTS  $(ETHBLOCKS_DBNAME_TEST);'
-	@mysql -uroot $(MYSQL_ROOT_AUTH) -e 'CREATE DATABASE $(ETHBLOCKS_DBNAME_TEST);'
-	@mysql -uroot $(MYSQL_ROOT_AUTH) -e "CREATE USER IF NOT EXISTS '$(ETHBLOCKS_DBUSER_TEST)'@'$(ETHBLOCKS_DBHOST)' IDENTIFIED BY '$(ETHBLOCKS_DBPASS_TEST)';"
-	@mysql -uroot $(MYSQL_ROOT_AUTH) -e "GRANT ALL ON $(ETHBLOCKS_DBNAME_TEST).* TO '$(ETHBLOCKS_DBUSER_TEST)'@'$(ETHBLOCKS_DBHOST)';"
-	@mysql -uroot $(MYSQL_ROOT_AUTH) -e 'FLUSH PRIVILEGES;'
-	@mysql --protocol=tcp -h$(ETHBLOCKS_DBHOST) -P$(ETHBLOCKS_DBPORT) -u$(ETHBLOCKS_DBUSER_TEST) -p$(ETHBLOCKS_DBPASS_TEST) $(ETHBLOCKS_DBNAME_TEST) < test/sql/mysql/ethblocks_mysql_schema.sql
+	@$(MYSQL_ROOT) -e 'DROP DATABASE IF EXISTS  $(ETHBLOCKS_DBNAME_TEST);'
+	@$(MYSQL_ROOT) -e 'CREATE DATABASE $(ETHBLOCKS_DBNAME_TEST);'
+	@$(MYSQL_ROOT) -e "CREATE USER IF NOT EXISTS '$(ETHBLOCKS_DBUSER_TEST)'@'%' IDENTIFIED BY '$(ETHBLOCKS_DBPASS_TEST)';"
+	@$(MYSQL_ROOT) -e "GRANT ALL ON $(ETHBLOCKS_DBNAME_TEST).* TO '$(ETHBLOCKS_DBUSER_TEST)'@'%';"
+	@$(MYSQL_ROOT) -e 'FLUSH PRIVILEGES;'
+	@mysql $(MYSQL_CONN) -u$(ETHBLOCKS_DBUSER_TEST) -p$(ETHBLOCKS_DBPASS_TEST) $(ETHBLOCKS_DBNAME_TEST) < test/sql/mysql/ethblocks_mysql_schema.sql
 
 test: test-db-setup
 	@echo "Starting tests for ethblocks"
