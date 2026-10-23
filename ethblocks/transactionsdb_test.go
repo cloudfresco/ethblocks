@@ -21,9 +21,7 @@ func TestTransactionService_AddTransaction(t *testing.T) {
 
 	blockNumber := big.NewInt(7602500)
 	block, err := GetBlockByNumber(ctx, client, blockNumber)
-	if err != nil {
-		t.Error(err)
-	}
+	skipIfPruned(t, err)
 	transactions := GetTransactions(block)
 
 	err = test.LoadSQL(appState)
