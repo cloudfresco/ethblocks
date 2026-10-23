@@ -44,7 +44,7 @@ jobs:
       ETHBLOCKS_DBHOST: 127.0.0.1
       ETHBLOCKS_DBPORT: 3306
       ETHBLOCKS_DBNAME_TEST: ethblocks_test
-      ETHBLOCKS_CLIENT: https://ethereum-rpc.publicnode.com
+      ETHBLOCKS_CLIENT: https://eth.drpc.org
       GOLANGCI_LINT_VERSION: v2.12.2
 
     steps:

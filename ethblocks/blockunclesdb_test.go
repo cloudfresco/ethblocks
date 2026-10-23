@@ -21,9 +21,7 @@ func TestBlockUncleService_AddBlockUncle(t *testing.T) {
 	ctx := context.Background()
 	blockNumber := big.NewInt(7602500)
 	block, err := GetBlockByNumber(ctx, client, blockNumber)
-	if err != nil {
-		t.Error(err)
-	}
+	skipIfPruned(t, err)
 	uncles := GetUncles(block)
 	uncle := uncles[0]
 	err = test.LoadSQL(appState)
