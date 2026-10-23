@@ -3,6 +3,7 @@ package ethblocks
 import (
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	etbcommon "github.com/cloudfresco/ethblocks/common"
@@ -23,4 +24,17 @@ func TestMain(m *testing.M) {
 	clientAddr = GetEthblocksClientAddr()
 	exitVal := m.Run()
 	os.Exit(exitVal)
+}
+
+// skipIfPruned skips the test when the RPC node no longer serves the requested
+// historical block (public nodes prune old state), and fails on any other error.
+func skipIfPruned(t *testing.T, err error) {
+	t.Helper()
+	if err == nil {
+		return
+	}
+	if strings.Contains(err.Error(), "pruned history unavailable") {
+		t.Skip(err)
+	}
+	t.Fatal(err)
 }

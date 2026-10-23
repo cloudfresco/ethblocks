@@ -21,9 +21,7 @@ func TestTransactionReceiptService_AddTransactionReceipt(t *testing.T) {
 
 	blockNumber := big.NewInt(7602500)
 	block, err := GetBlockByNumber(ctx, client, blockNumber)
-	if err != nil {
-		t.Error(err)
-	}
+	skipIfPruned(t, err)
 	transactions := GetTransactions(block)
 	receipt, err := GetTransactionReceipt(ctx, client, transactions[0].Hash())
 	if err != nil {
